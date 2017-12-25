@@ -1,8 +1,8 @@
 # Makefile to build all subdirs and make disk image
 
-all: BootLoader Kernel32 Disk.img
+all: bootloader kernel32 Disk.img
 
-BootLoader/BootLoader.bin:
+bootloader:
 	@echo
 	@echo ==================== Build Boot Loader ====================
 	@echo
@@ -13,7 +13,7 @@ BootLoader/BootLoader.bin:
 	@echo ==================== Build Complete ====================
 	@echo
 
-Kernel32/Kernel32.bin:
+kernel32:
 	@echo
 	@echo ==================== Build 32bit Kernel ====================
 	@echo
