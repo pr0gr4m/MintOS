@@ -8,7 +8,7 @@ jmp 0x07C0:START			; set CS segment register with 0x07C0 and jmp to START label
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Environment values
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-TOTALSECTORCOUNT:	dw 1024		; size of Mint64 OS excluding boot loader
+TOTALSECTORCOUNT:	dw 1		; size of Mint64 OS excluding boot loader
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Code Section
