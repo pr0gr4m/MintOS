@@ -11,6 +11,23 @@ START:
 	mov ds, ax			; start address of protection mode
 	mov es, ax			; entry point (0x10000)
 
+	; Activate A20 Gate
+	; Use BIOS Service or System Control Port
+	; BIOS
+	mov ax, 0x2401
+	int 0x15
+
+	jc .A20GATEERROR
+	jmp .A20GATESUCCESS
+
+.A20GATEERROR:
+	; error with BIOS, use system control port
+	in al, 0x92			; read from system control port(0x92)
+	or al, 0x02			; set A20 gate bit (bit 1) 1
+	and al, 0xFE		; set reboot bit (bit 0) 0
+	out 0x92, al
+
+.A20GATESUCCESS:
 	cli					; block interrupt
 	lgdt [ GDTR ]		; set GDTR data structure
 
