@@ -39,7 +39,7 @@ START:
 
 	; set the criteria with kernel code segment
 	; cs segment selector : EIP
-	jmp dword 0x08: ( PROTECTEDMODE - $$ + 0x10000 )
+	jmp dword 0x18: ( PROTECTEDMODE - $$ + 0x10000 )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -47,7 +47,7 @@ START:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [BITS 32]
 PROTECTEDMODE:
-	mov ax, 0x10		; protected mode kernel data segment descriptor
+	mov ax, 0x20		; protected mode kernel data segment descriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -64,7 +64,7 @@ PROTECTEDMODE:
 	call PRINTMESSAGE
 	add esp, 12
 
-	jmp dword 0x08: 0x10200		; jmp to C Kernel
+	jmp dword 0x18: 0x10200		; jmp to C Kernel
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; function code section
@@ -132,6 +132,23 @@ GDT:
 		db 0x00
 		db 0x00
 		db 0x00
+
+	; IA-32e Mode Kernel Code Segment Descriptor
+	IA_32eCODEDESCRIPTOR:
+		dw 0xFFFF					; Limit [15:0]
+		dw 0x0000					; Base [15:0]
+		db 0x00						; Base [23:16]
+		db 0x9A						; P = 1, DPL = 0, Code Segment, Execute/Read
+		db 0xAF						; G = 1, D = 0, L = 1, Limit [19:16]
+		db 0x00						; Base [31:24]
+
+	; IA-32e Mode Kernel Data Segment Descriptor
+		dw 0xFFFF					; Limit [15:0]
+		dw 0x0000					; Base [15:0]
+		db 0x00						; Base [23:16]
+		db 0x92						; P = 1, DPL = 0, Data Segment, Read/Write
+		db 0xAF						; G = 1, D = 0, L = 1, Limit [19:16]
+		db 0x00						; Base [31:24]
 
 	; Protected Mode Kernel Code Segment Descriptor
 	CODEDESCRIPTOR:
