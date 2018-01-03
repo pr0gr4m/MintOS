@@ -2,7 +2,7 @@
 
 SECTION .text
 
-global kInPortByte, kOutPortByte
+global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
 
 ; read from port
 ; @param port number
@@ -31,3 +31,22 @@ kOutPortByte:
 	pop rax
 	pop rdx
 	ret
+
+; set GDT Table to GDTR register
+; @param address of GDT Table Data Structure
+kLoadGDTR:
+	lgdt [ rdi ]
+	ret
+
+; set TSS Segment Descriptor to TR register
+; @param TSS Segment descriptor offset
+kLoadTR:
+	ltr di
+	ret
+
+; set IDT Table to IDTR register
+; @param address of IDT Table Data Structure
+kLoadIDTR:
+	lidt [ rdi ]
+	ret
+
