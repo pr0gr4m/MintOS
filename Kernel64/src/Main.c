@@ -23,6 +23,7 @@ void Main(void)
 	kPrintString(60, 13, "PASS");
 
 	kPrintString(0, 14, "IDT Initialize.............................................[    ]");
+	kInitializeIDTTables();
 	kLoadIDTR(IDTR_STARTADDRESS);
 	kPrintString(60, 14, "PASS");
 
