@@ -3,6 +3,7 @@
 SECTION .text
 
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
+global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 
 ; read from port
 ; @param port number
@@ -50,3 +51,21 @@ kLoadIDTR:
 	lidt [ rdi ]
 	ret
 
+; Enable Interrupt
+; @param
+kEnableInterrupt:
+	sti
+	ret
+
+; Disable Interrupt
+; @param
+kDisableInterrupt:
+	cli
+	ret
+
+; Read RFLAGS
+; @param
+kReadRFLAGS:
+	pushfq
+	pop rax
+	ret

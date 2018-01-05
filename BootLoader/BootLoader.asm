@@ -33,7 +33,7 @@ START:
 
 .SCREENCLEARLOOP:
 	mov byte [ es: si ], 0			; clear video memory
-	mov byte [ es: si + 1 ], 0x0A	; set video memory attribute (light green)
+	mov byte [ es: si + 1 ], 0x07	; set video memory attribute (light green)
 
 	add si, 2
 	cmp si, 80 * 25 * 2				; cmp with screen size
