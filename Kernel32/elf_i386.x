@@ -3,7 +3,7 @@ OUTPUT_FORMAT("elf32-i386", "elf32-i386",
 	      "elf32-i386")
 OUTPUT_ARCH(i386)
 ENTRY(Main)
-SEARCH_DIR("/usr/lib"); SEARCH_DIR("/usr/lib64");
+SEARCH_DIR("/usr/lib32"); SEARCH_DIR("/usr/lib");
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */

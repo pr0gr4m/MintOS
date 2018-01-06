@@ -1,6 +1,8 @@
 #include "Types.h"
 #include "AssemblyUtility.h"
+#include "Utility.h"
 #include "Keyboard.h"
+#include "Queue.h"
 
 /*
  * Functions about keyboard controller
@@ -26,9 +28,12 @@ BOOL kIsInputBufferFull(void)
 	return FALSE;
 }
 
-BOOL kWaitForACK(void)
+BOOL kWaitForACKAndPutOtherScanCode(void)
 {
 	int i, j;
+	BYTE bData;
+	BOOL bResult = FALSE;
+
 	for (i = 0; i < 100; i++)
 	{
 		for (j = 0; j < 0xFFFF; j++)
@@ -36,10 +41,19 @@ BOOL kWaitForACK(void)
 			if (kIsOutputBufferFull() == TRUE)
 				break;
 		}
-		if (kInPortByte(0x60) == 0xFA)
-			return TRUE;
+
+		bData = kInPortByte(0x60);
+		if (bData == 0xFA)
+		{
+			bResult = TRUE;
+			break;
+		}
+		else
+		{
+			kConvertScanCodeAndPutQueue(bData);
+		}
 	}
-	return FALSE;
+	return bResult;
 }
 
 BOOL kWaitForInputBufferEmpty(void)
@@ -66,7 +80,11 @@ BOOL kWaitForOutputBufferFull(void)
 
 BOOL kActivateKeyboard(void)
 {
-	int i;
+	BOOL bPreviousInterrupt;
+	BOOL bResult;
+
+	// Disable Interrupt
+	bPreviousInterrupt = kSetInterruptFlag(FALSE);
 
 	// activate keyboard device to send keyboard activation command to control register
 	kOutPortByte(0x64, 0xAE);
@@ -76,7 +94,11 @@ BOOL kActivateKeyboard(void)
 	// send keyboard activation command to keyboard
 	kOutPortByte(0x60, 0xF4);
 
-	return kWaitForACK();
+	bResult = kWaitForACKAndPutOtherScanCode();
+
+	kSetInterruptFlag(bPreviousInterrupt);
+
+	return bResult;
 }
 
 // read key scan code from output buffer (port 0x60)
@@ -88,7 +110,12 @@ BYTE kGetKeyboardScanCode(void)
 
 BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn)
 {
-	BYTE LEDStatus = 0x00;
+	BOOL bPreviousInterrupt;
+	BOOL bResult;
+	BYTE bData;
+
+	// Disable Interrupt
+	bPreviousInterrupt = kSetInterruptFlag(FALSE);
 
 	while (kWaitForInputBufferEmpty() == FALSE);
 
@@ -97,19 +124,22 @@ BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn)
 	// wait for keyboard receive the command
 	while (kWaitForInputBufferEmpty() == FALSE);
 
-	if (kWaitForACK() == FALSE)
-		return FALSE;
+	bResult = kWaitForACKAndPutOtherScanCode();
 
-	if (bCapsLockOn)
-		LEDStatus |= (1 << 2);
-	if (bNumLockOn)
-		LEDStatus |= (1 << 1);
-	if (bScrollLockOn)
-		LEDStatus |= 1;
-	kOutPortByte(0x60, LEDStatus);
+	if (bResult == FALSE)
+	{
+		kSetInterruptFlag(bPreviousInterrupt);
+		return FALSE;
+	}
+
+	kOutPortByte(0x60, (bCapsLockOn << 2) | (bNumLockOn << 1) | bScrollLockOn);
 	// wait for keyboard receive the LED Data
 	while (kWaitForInputBufferEmpty() == FALSE);
-	return kWaitForACK();
+
+	bResult = kWaitForACKAndPutOtherScanCode();
+	kSetInterruptFlag(bPreviousInterrupt);
+
+	return bResult;
 }
 
 void kEnableA20Gate(void)
@@ -149,6 +179,11 @@ void kReboot(void)
 
 // keyboard manager to manage keyboard status
 static KEYBOARDMANAGER gs_stKeyboardManager = { 0, };
+
+
+static QUEUE gs_stKeyQueue;
+static KEYDATA gs_vstKeyQueueBuffer[KEY_MAXQUEUECOUNT];
+
 
 static KEYMAPPINGENTRY gs_vstKeyMappingTable[KEY_MAPPINGTABLEMAXCOUNT] =
 {
@@ -399,4 +434,43 @@ BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlag
 
 	kUpdateCombinationKeyStatusAndLED(bScanCode);
 	return TRUE;
+}
+
+BOOL kInitializeKeyboard(void)
+{
+	kInitializeQueue(&gs_stKeyQueue, gs_vstKeyQueueBuffer, KEY_MAXQUEUECOUNT,
+			sizeof(KEYDATA));
+	return kActivateKeyboard();
+}
+
+BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode)
+{
+	KEYDATA stData;
+	BOOL bResult = FALSE;
+	BOOL bPreviousInterrupt;
+
+	stData.bScanCode = bScanCode;
+
+	if (kConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode),
+				&(stData.bFlags)) == TRUE)
+	{
+		bPreviousInterrupt = kSetInterruptFlag(FALSE);
+		bResult = kPutQueue(&gs_stKeyQueue, &stData);
+		kSetInterruptFlag(bPreviousInterrupt);
+	}
+	return bResult;
+}
+
+BOOL kGetKeyFromKeyQueue(KEYDATA* pstData)
+{
+	BOOL bResult;
+	BOOL bPreviousInterrupt;
+
+	if (kIsQueueEmpty(&gs_stKeyQueue) == TRUE)
+		return FALSE;
+
+	bPreviousInterrupt = kSetInterruptFlag(FALSE);
+	bResult = kGetQueue(&gs_stKeyQueue, pstData);
+	kSetInterruptFlag(bPreviousInterrupt);
+	return bResult;
 }
