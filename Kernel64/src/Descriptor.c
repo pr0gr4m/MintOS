@@ -2,8 +2,6 @@
 #include "Utility.h"
 #include "ISR.h"
 
-extern void kPrintString(int iX, int iY, const char* pcString);
-
 /*
  * GDT & TSS
  */
@@ -89,11 +87,6 @@ void kInitializeIDTTables(void)
 	pstIDTR->qwBaseAddress = (QWORD)pstEntry;
 	pstIDTR->wLimit = IDT_TABLESIZE - 1;
 
-	for (i = 0; i < IDT_MAXENTRYCOUNT; i++)
-	{
-		kSetIDTEntry(&(pstEntry[i]), kDummyHandler, 0x08, IDT_FLAGS_IST1,
-					IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	}
 	// set Exception ISR
 	kSetIDTEntry( &( pstEntry[ 0 ] ), kISRDivideError, 0x08, IDT_FLAGS_IST1,
 		IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
@@ -196,14 +189,3 @@ void kSetIDTEntry(IDTENTRY* pstEntry, void* pvHandler, WORD wSelector,
 	pstEntry->dwUpperBaseAddress = (QWORD)pvHandler >> 32;
 	pstEntry->dwReserved = 0;
 }
-
-void kDummyHandler(void)
-{
-	kPrintString(0, 0, "====================================================");
-	kPrintString(0, 1, "        Dummy Interrupt Handler Execute!!!          ");
-	kPrintString(0, 2, "         Interrupt or Exception Occur!!!!           ");
-	kPrintString(0, 3, "====================================================");
-
-	while (1);
-}
-
