@@ -1,6 +1,8 @@
 #include <stdarg.h>
 #include "Console.h"
 #include "Keyboard.h"
+#include "Utility.h"
+#include "AssemblyUtility.h"
 
 CONSOLEMANAGER gs_stConsoleManager = { 0, };
 
@@ -83,7 +85,7 @@ int kConsolePrintString(const char* pcBuffer)
 		{
 			kMemCpy(CONSOLE_VIDEOMEMORYADDRESS,
 					CONSOLE_VIDEOMEMORYADDRESS + CONSOLE_WIDTH * sizeof(CHARACTER),
-					(CONSOLE_HEIGHT - 1) * CONSLE_WIDTH * sizeof(CHARACTER));
+					(CONSOLE_HEIGHT - 1) * CONSOLE_WIDTH * sizeof(CHARACTER));
 			for (j = (CONSOLE_HEIGHT - 1) * CONSOLE_WIDTH;
 					j < (CONSOLE_HEIGHT * CONSOLE_WIDTH); j++)
 			{
