@@ -83,8 +83,8 @@ int kConsolePrintString(const char* pcBuffer)
 		// scroll
 		if (iPrintOffset >= (CONSOLE_HEIGHT * CONSOLE_WIDTH))
 		{
-			kMemCpy(CONSOLE_VIDEOMEMORYADDRESS,
-					CONSOLE_VIDEOMEMORYADDRESS + CONSOLE_WIDTH * sizeof(CHARACTER),
+			kMemCpy((void*)CONSOLE_VIDEOMEMORYADDRESS,
+					(void*)(CONSOLE_VIDEOMEMORYADDRESS + CONSOLE_WIDTH * sizeof(CHARACTER)),
 					(CONSOLE_HEIGHT - 1) * CONSOLE_WIDTH * sizeof(CHARACTER));
 			for (j = (CONSOLE_HEIGHT - 1) * CONSOLE_WIDTH;
 					j < (CONSOLE_HEIGHT * CONSOLE_WIDTH); j++)
