@@ -5,7 +5,7 @@ SECTION .text
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
-global kSwitchContext
+global kSwitchContext, kHlt
 
 ; read from port
 ; @param port number
@@ -185,3 +185,9 @@ kSwitchContext:
 	KLOADCONTEXT
 	iretq
 
+; Halt Processor
+; @param
+kHlt:
+	hlt
+	hlt
+	ret
