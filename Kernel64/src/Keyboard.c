@@ -3,6 +3,7 @@
 #include "Utility.h"
 #include "Keyboard.h"
 #include "Queue.h"
+#include "Synchronization.h"
 
 /*
  * Functions about keyboard controller
@@ -454,9 +455,9 @@ BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode)
 	if (kConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode),
 				&(stData.bFlags)) == TRUE)
 	{
-		bPreviousInterrupt = kSetInterruptFlag(FALSE);
+		bPreviousInterrupt = kLockForSystemData();
 		bResult = kPutQueue(&gs_stKeyQueue, &stData);
-		kSetInterruptFlag(bPreviousInterrupt);
+		kUnlockForSystemData(bPreviousInterrupt);
 	}
 	return bResult;
 }
@@ -469,8 +470,8 @@ BOOL kGetKeyFromKeyQueue(KEYDATA* pstData)
 	if (kIsQueueEmpty(&gs_stKeyQueue) == TRUE)
 		return FALSE;
 
-	bPreviousInterrupt = kSetInterruptFlag(FALSE);
+	bPreviousInterrupt = kLockForSystemData();
 	bResult = kGetQueue(&gs_stKeyQueue, pstData);
-	kSetInterruptFlag(bPreviousInterrupt);
+	kUnlockForSystemData(bPreviousInterrupt);
 	return bResult;
 }

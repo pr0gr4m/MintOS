@@ -5,7 +5,7 @@ SECTION .text
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
-global kSwitchContext, kHlt
+global kSwitchContext, kHlt, kTestAndSet
 
 ; read from port
 ; @param port number
@@ -190,4 +190,21 @@ kSwitchContext:
 kHlt:
 	hlt
 	hlt
+	ret
+
+; Atomic Test and Set
+; Compare Destination with Compare and set Source to Destination when same
+; @param Destination, Compare, Source
+kTestAndSet:
+	mov rax, rsi
+
+	lock cmpxchg byte[rdi], dl
+	je .SUCCESS
+
+.NOTSAME:
+	mov rax, 0x00
+	ret
+
+.SUCCESS:
+	mov rax, 0x01
 	ret
