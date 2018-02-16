@@ -49,7 +49,7 @@ kReadCPUID:
 kSwitchAndExecute64bitKernel:
 	; set PAE bit of CR4 control register to 1
 	mov eax, cr4
-	or eax, 0x20		; PAE bit (bit 5)
+	or eax, 0x620		; PAE bit (bit 5)
 	mov cr4, eax
 
 	; set PML4 table address and activate cache at CR3
@@ -67,8 +67,9 @@ kSwitchAndExecute64bitKernel:
 	; set CR0 register to NW bit 0, CD bit 0, PG bit 1
 	; activate cache and paging
 	mov eax, cr0
-	or eax, 0xE0000000			; set NW (bit 29), CD (bit 30), PG (bit 31) to 1
-	xor eax, 0x60000000			; set NW (bit 29), CD (bit 30) to 0
+	or eax, 0xE000000E			; set NW (bit 29), CD (bit 30), PG (bit 31) 
+								; TS (bit 3), EM (bit 2), MP(bit 1) to 1
+	xor eax, 0x60000004			; set NW (bit 29), CD (bit 30), EM (bit 2) to 0
 	mov cr0, eax
 
 	jmp 0x08:0x200000			; set cs segment selector to IA-32e mode code descriptor

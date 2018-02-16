@@ -6,6 +6,7 @@ global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
 global kSwitchContext, kHlt, kTestAndSet
+global kInitializeFPU, kSaveFPUContext, kLoadFPUContext, kSetTS, kClearTS
 
 ; read from port
 ; @param port number
@@ -207,4 +208,44 @@ kTestAndSet:
 
 .SUCCESS:
 	mov rax, 0x01
+	ret
+
+;;;;;;;;;;;;;;;;;;;;
+; FPU Functions
+;;;;;;;;;;;;;;;;;;;;
+
+; Init FPU
+; @param
+kInitializeFPU:
+	finit
+	ret
+
+; Save FPU Context to Buffer
+; @param Buffer
+kSaveFPUContext:
+	fxsave [rdi]
+	ret
+
+; Load FPU Context from Buffer
+; @param Buffer
+kLoadFPUContext:
+	fxrstor [rdi]
+	ret
+
+; Set TS bit of CR0 to 1
+; @param
+kSetTS:
+	push rax
+
+	mov rax, cr0
+	or rax, 0x08
+	mov cr0, rax
+
+	pop rax
+	ret
+
+; Set TS bit of CR0 to 0
+; @param
+kClearTS:
+	clts
 	ret
