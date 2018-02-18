@@ -8,6 +8,7 @@
 #include "ConsoleShell.h"
 #include "Task.h"
 #include "PIT.h"
+#include "DynamicMemory.h"
 
 void Main(void)
 {
@@ -44,8 +45,12 @@ void Main(void)
 	kPrintf("TCB Pool And Scheduler Initialize..........................[PASS]\n");
 	iCursorY++;
 	kInitializeScheduler();
+
+	kPrintf("Dynamic Memory Initialize..................................[PASS]\n");
+	iCursorY++;
+	kInitializeDynamicMemory();
+
 	kInitializePIT(MSTOCOUNT(1), 1);
-	
 
 	kPrintf("Keyboard Activate And Queue Initialize.....................[    ]");
 

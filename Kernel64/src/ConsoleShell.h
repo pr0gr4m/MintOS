@@ -55,4 +55,9 @@ static void kTestMutex(const char* pcParameterBuffer);
 static void kShowMatrix(const char* pcParameterBuffer);
 static void kTestPIE(const char* pcParameterBuffer);
 
+static void kTestRandomAllocation(const char* pcParameterBuffer);
+static void kTestSequentialAllocation(const char* pcParameterBuffer);
+static void kShowDynamicMemoryInformation(const char* pcParameterBuffer);
+static void kRandomAllocationTask(void);
+
 #endif
