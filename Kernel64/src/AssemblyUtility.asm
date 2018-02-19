@@ -2,7 +2,8 @@
 
 SECTION .text
 
-global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
+global kInPortByte, kOutPortByte, kInPortWord, kOutPortWord
+global kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
 global kSwitchContext, kHlt, kTestAndSet
@@ -31,6 +32,34 @@ kOutPortByte:
 	mov rax, rsi
 
 	out dx, al
+
+	pop rax
+	pop rdx
+	ret
+
+; read 2 bytes from port
+; @param port number
+kInPortWord:
+	push rdx
+
+	mov rdx, rdi
+	mov rax, 0
+	
+	in ax, dx
+
+	pop rdx
+	ret
+
+; write 2 bytes to port
+; @param port number, data
+kOutPortWord:
+	push rdx
+	push rax
+
+	mov rdx, rdi
+	mov rax, rsi
+
+	out dx, ax
 
 	pop rax
 	pop rdx
@@ -249,3 +278,4 @@ kSetTS:
 kClearTS:
 	clts
 	ret
+

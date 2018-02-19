@@ -9,6 +9,7 @@
 #include "Task.h"
 #include "PIT.h"
 #include "DynamicMemory.h"
+#include "HardDisk.h"
 
 void Main(void)
 {
@@ -73,6 +74,17 @@ void Main(void)
 	kEnableInterrupt();
 	kSetCursor(60, iCursorY++);
 	kPrintf("PASS\n");
+
+	kPrintf("HDD Initialize.............................................[    ]");
+	kSetCursor(60, iCursorY++);
+	if (kInitializeHDD() == TRUE)
+	{
+		kPrintf("PASS\n");
+	}
+	else
+	{
+		kPrintf("FAIL\n");
+	}
 
 	kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM | TASK_FLAGS_IDLE, 0, 0,
 			(QWORD)kIdleTask);
