@@ -10,6 +10,7 @@
 #include "PIT.h"
 #include "DynamicMemory.h"
 #include "HardDisk.h"
+#include "FileSystem.h"
 
 void Main(void)
 {
@@ -83,6 +84,18 @@ void Main(void)
 	}
 	else
 	{
+		kPrintf("FAIL\n");
+	}
+
+	kPrintf("File System Initialize.....................................[    ]");
+	if (kInitializeFileSystem() == TRUE)
+	{
+		kSetCursor(60, iCursorY++);
+		kPrintf("PASS\n");
+	}
+	else
+	{
+		kSetCursor(60, iCursorY++);
 		kPrintf("FAIL\n");
 	}
 
