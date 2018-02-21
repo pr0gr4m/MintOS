@@ -42,26 +42,39 @@ static void kReadTimeStampCounter(const char* pcParameterBuffer);
 static void kMeasureProcessorSpeed(const char* pcParameterBuffer);
 static void kShowDateAndTime(const char* pcParameterBuffer);
 
+// Test Task functions
 static void kCreateTestTask(const char* pcParameterBuffer);
 static void kChangeTaskPriority(const char* pcParameterBuffer);
 static void kShowTaskList(const char* pcParameterBuffer);
 static void kKillTask(const char* pcParameterBuffer);
 static void kCPULoad(const char* pcParameterBuffer);
 
+// Test Thread functions
 static void kCreateThreadTask(void);
 static void kTestThread(const char* pcParameterBuffer);
 
+// Test Mutex functions
 static void kTestMutex(const char* pcParameterBuffer);
 static void kShowMatrix(const char* pcParameterBuffer);
 static void kTestPIE(const char* pcParameterBuffer);
 
+// Test Memory Allocation Functions
 static void kTestRandomAllocation(const char* pcParameterBuffer);
 static void kTestSequentialAllocation(const char* pcParameterBuffer);
 static void kShowDynamicMemoryInformation(const char* pcParameterBuffer);
 static void kRandomAllocationTask(void);
 
+// PATA Driver Functions
 static void kShowHDDInformation(const char* pcParameterBuffer);
 static void kReadSector(const char* pcParameterBuffer);
 static void kWriteSector(const char* pcParameterBuffer);
+
+// File System Functions
+static void kMountHDD(const char* pcParameterBuffer);
+static void kFormatHDD(const char* pcParameterBuffer);
+static void kShowFileSystemInformation(const char* pcParameterBuffer);
+static void kCreateFileInRootDirectory(const char* pcParameterBuffer);
+static void kDeleteFileInRootDirectory(const char* pcParameterBuffer);
+static void kShowRootDirectory(const char* pcParameterBuffer);
 
 #endif
