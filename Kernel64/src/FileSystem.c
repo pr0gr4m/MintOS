@@ -447,7 +447,7 @@ static BOOL kCreateFile(const char* pcFileName, DIRECTORYENTRY* pstEntry,
 }
 
 static BOOL kFreeClusterUntilEnd(DWORD dwClusterIndex)
-{	// issue
+{
 	DWORD dwCurrentClusterIndex;
 	DWORD dwNextClusterIndex;
 
