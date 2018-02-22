@@ -4,6 +4,9 @@
 #include "Types.h"
 #include <stdarg.h>
 
+#define MIN(x, y)		(((x) < (y)) ? (x) : (y))
+#define MAX(x, y)		(((x) > (y)) ? (x) : (y))
+
 extern volatile QWORD g_qwTickCount;
 
 void kMemSet(void* pvDestination, BYTE bData, int iSize);
