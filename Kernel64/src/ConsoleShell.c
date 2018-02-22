@@ -46,6 +46,9 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
 	{ "createfile", "Create File, ex) createfile a.txt", kCreateFileInRootDirectory },
 	{ "deletefile", "Delete File, ex) deletefile a.txt", kDeleteFileInRootDirectory },
 	{ "dir", "Show Directory", kShowRootDirectory },
+	{ "writefile", "Write Data To File, ex) writefile a.txt", kWriteDataToFile },
+	{ "readfile", "Read Data From File, ex) readfile a.txt", kReadDataFromFile },
+	{ "testfileio", "Test File I/O Function", kTestFileIO },
 };
 
 // main loop of shell
