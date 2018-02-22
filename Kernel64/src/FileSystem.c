@@ -35,7 +35,7 @@ BOOL kInitializeFileSystem(void)
 
 	if (gs_stFileSystemManager.pstHandlePool == NULL)
 	{
-		gs_stFileSystemManager.bMounted == FALSE;
+		gs_stFileSystemManager.bMounted = FALSE;
 		return FALSE;
 	}
 
@@ -603,7 +603,7 @@ DWORD kReadFile(void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFile)
 	}
 
 	kUnlock(&(gs_stFileSystemManager.stMutex));
-	return dwReadCount;
+	return (dwReadCount / dwSize);
 }
 
 static BOOL kUpdateDirectoryEntry(FILEHANDLE* pstFileHandle)
@@ -708,7 +708,7 @@ DWORD kWriteFile(const void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFil
 	}
 
 	kUnlock(&(gs_stFileSystemManager.stMutex));
-	return dwWriteCount;
+	return (dwWriteCount / dwSize);
 }
 
 BOOL kWriteZero(FILE* pstFile, DWORD dwCount)

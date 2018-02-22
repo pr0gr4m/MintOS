@@ -42,8 +42,8 @@ typedef int (* fWriteHDDSector)(BOOL bPrimary, BOOL bMaster, DWORD dwLBA,
 #define rewinddir	kRewindDirectory
 #define closedir	kCloseDirectory
 
-#define SEEK_SET	FILESYSETM_SEEK_SET
-#define SEEK_CUR	FILESYSETM_SEEK_CUR
+#define SEEK_SET	FILESYSTEM_SEEK_SET
+#define SEEK_CUR	FILESYSTEM_SEEK_CUR
 #define SEEK_END	FILESYSTEM_SEEK_END
 
 #define size_t		DWORD
