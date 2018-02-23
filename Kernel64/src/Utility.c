@@ -7,33 +7,69 @@ volatile QWORD g_qwTickCount = 0;
 void kMemSet(void* pvDestination, BYTE bData, int iSize)
 {
 	int i;
-	for (i = 0; i < iSize; i++)
-	{
-		((char*)pvDestination)[i] = bData;
-	}
+	QWORD qwData;
+	int iRemainByteStartOffset;
+
+	qwData = 0;
+	for (i = 0; i < 8; i++)
+		qwData = (qwData << 8) | bData;
+
+	for (i = 0; i < (iSize / 8); i++)
+		((QWORD*)pvDestination)[i] = qwData;
+
+	iRemainByteStartOffset = i * 8;
+	for (i = 0; i < (iSize % 8); i++)
+		((char*)pvDestination)[iRemainByteStartOffset++] = bData;
 }
 
 int kMemCpy(void* pvDestination, const void* pvSource, int iSize)
 {
-	int i;
-	for (i = 0; i < iSize; i++)
+	int i, iRemainByteStartOffset;
+
+	for (i = 0; i < (iSize / 8); i++)
+		((QWORD*)pvDestination)[i] = ((QWORD*)pvSource)[i];
+
+	iRemainByteStartOffset = i * 8;
+	for (i = 0; i < (iSize % 8); i++)
 	{
-		((char*)pvDestination)[i] = ((char*)pvSource)[i];
+		((char*)pvDestination)[iRemainByteStartOffset] =
+			((char*)pvSource)[iRemainByteStartOffset];
+		iRemainByteStartOffset++;
 	}
+
 	return iSize;
 }
 
 int kMemCmp(const void* pvDestination, const void* pvSource, int iSize)
 {
-	int i;
-	char cTemp;
+	int i, j;
+	int iRemainByteStartOffset;
+	QWORD qwValue;
+	char cValue;
 
-	for (i = 0; i < iSize; i++)
+	for (i = 0; i < (iSize / 8); i++)
 	{
-		cTemp = ((char*)pvDestination)[i] - ((char*)pvSource)[i];
-		if (cTemp != 0)
-			return (int)cTemp;
+		qwValue = ((QWORD*)pvDestination)[i] - ((QWORD*)pvSource)[i];
+		if (qwValue != 0)
+		{
+			for (j = 0; j < 8; j++)
+			{
+				if (((qwValue >> (j * 8)) & 0xFF) != 0)
+					return (qwValue >> (j * 8)) & 0xFF;
+			}
+		}
 	}
+
+	iRemainByteStartOffset = i * 8;
+	for (i = 0; i < (iSize % 8); i++)
+	{
+		cValue = ((char*)pvDestination)[iRemainByteStartOffset] -
+			((char*)pvSource)[iRemainByteStartOffset];
+		if (cValue != 0)
+			return cValue;
+		iRemainByteStartOffset++;
+	}
+
 	return 0;
 }
 
