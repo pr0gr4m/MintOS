@@ -806,7 +806,7 @@ DWORD kReadFile(void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFile)
 	}
 
 	kUnlock(&(gs_stFileSystemManager.stMutex));
-	return (dwReadCount / dwSize);
+	return dwReadCount;
 }
 
 static BOOL kUpdateDirectoryEntry(FILEHANDLE* pstFileHandle)
@@ -911,7 +911,7 @@ DWORD kWriteFile(const void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFil
 	}
 
 	kUnlock(&(gs_stFileSystemManager.stMutex));
-	return (dwWriteCount / dwSize);
+	return dwWriteCount;
 }
 
 BOOL kWriteZero(FILE* pstFile, DWORD dwCount)

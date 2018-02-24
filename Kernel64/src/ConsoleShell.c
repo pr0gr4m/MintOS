@@ -1344,7 +1344,7 @@ static void kShowRootDirectory( const char* pcParameterBuffer )
     
     // 총 파일의 개수와 파일의 총 크기를 출력
     kPrintf( "\t\tTotal File Count: %d\n", iTotalCount );
-    kPrintf( "\t\tTotal File Size: %d KByte (%d Cluster)\n", dwTotalByte, 
+    kPrintf( "\t\tTotal File Size: %d KByte (%d Cluster)\n", dwTotalByte / 1024, 
              dwUsedClusterCount );
     
     // 남은 클러스터 수를 이용해서 여유 공간을 출력
