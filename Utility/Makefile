@@ -1,5 +1,5 @@
 
-all: imagemaker
+all: imagemaker serialtransfer
 
 imagemaker:
 	@echo
@@ -11,6 +11,17 @@ imagemaker:
 
 	@echo
 	@echo ==================== Build ImageMaker Complete ====================
+	@echo
+
+serialtransfer:
+	@echo
+	@echo ==================== Build SerialTransfer ====================
+	@echo
+
+	make -C SerialTransfer
+
+	@echo
+	@echo ==================== Build SerialTransfer Complete ====================
 	@echo
 
 clean:
