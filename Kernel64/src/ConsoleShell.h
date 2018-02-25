@@ -85,4 +85,7 @@ static void kTestPerformance(const char* pcParameterBuffer);
 // Serial Port
 static void kDownloadFile(const char* pcParameterBuffer);
 
+// MP
+static void kShowMPConfigurationTable(const char* pcParameterBuffer);
+
 #endif
