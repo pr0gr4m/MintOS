@@ -11,6 +11,14 @@ START:
 	mov ds, ax			; start address of protection mode
 	mov es, ax			; entry point (0x10000)
 
+	; Application Processor Jump to Protected Kernel
+	mov ax, 0x0000
+	mov es, ax
+	cmp byte [ es: 0x7C09 ], 0x00
+	je .APPLICATIONPROCESSORSTARTPOINT
+
+	; BSP Area
+
 	; Activate A20 Gate
 	; Use BIOS Service or System Control Port
 	; BIOS
@@ -28,6 +36,7 @@ START:
 	out 0x92, al
 
 .A20GATESUCCESS:
+.APPLICATIONPROCESSORSTARTPOINT:
 	cli					; block interrupt
 	lgdt [ GDTR ]		; set GDTR data structure
 
@@ -58,12 +67,17 @@ PROTECTEDMODE:
 	mov esp, 0xFFFE
 	mov ebp, 0xFFFE
 
+	; Application Processor Jump to C Kernel Entry Point
+	cmp byte [ 0x7C09 ], 0x00
+	je .APPLICATIONPROCESSORSTARTPOINT
+
 	push ( SWITCHSUCCESSMESSAGE - $$ + 0x10000 )
 	push 2
 	push 0
 	call PRINTMESSAGE
 	add esp, 12
 
+.APPLICATIONPROCESSORSTARTPOINT
 	jmp dword 0x18: 0x10200		; jmp to C Kernel
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
