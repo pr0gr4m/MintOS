@@ -8,6 +8,7 @@ global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
 global kSwitchContext, kHlt, kTestAndSet
 global kInitializeFPU, kSaveFPUContext, kLoadFPUContext, kSetTS, kClearTS
+global kEnableGlobalLocalAPIC
 
 ; read from port
 ; @param port number
@@ -279,3 +280,20 @@ kClearTS:
 	clts
 	ret
 
+; Enable APIC to set IA32_APIC_BASE MSR register bit 11 to 1
+; @param
+kEnableGlobalLocalAPIC:
+	push rax
+	push rcx
+	push rdx
+
+	mov rcx, 27		; register address 27
+	rdmsr			; MSR use edx(upper 32) and eax(lower 32)
+
+	or eax, 0x0800
+	wrmsr
+
+	pop rdx
+	pop rcx
+	pop rax
+	ret
