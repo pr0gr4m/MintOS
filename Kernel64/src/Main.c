@@ -12,10 +12,18 @@
 #include "HardDisk.h"
 #include "FileSystem.h"
 #include "SerialPort.h"
+#include "MultiProcessor.h"
+
+void MainForApplicationProcessor(void);
 
 void Main(void)
 {
 	int iCursorX, iCursorY;
+
+	if (*((BYTE*)BOOTSTRAPPROCESSOR_FLAGADDRESS) == 0)
+		MainForApplicationProcessor();
+
+	*((BYTE*)BOOTSTRAPPROCESSOR_FLAGADDRESS) = 0;
 
 	kInitializeConsole(0, 10);
 	kPrintf("Switch To IA-32e Mode Success!\n");
@@ -110,3 +118,27 @@ void Main(void)
 	kStartConsoleShell();
 }
 
+void MainForApplicationProcessor(void)
+{
+	QWORD qwTickCount;
+
+	// set GDT Table
+	kLoadGDTR(GDTR_STARTADDRESS);
+
+	// set TSS Descriptor
+	kLoadTR(GDT_TSSSEGMENT + (kGetAPICID() * sizeof(GDTENTRY16)));
+
+	// set IDT Table
+	kLoadIDTR(IDTR_STARTADDRESS);
+
+	qwTickCount = kGetTickCount();
+	while (1)
+	{
+		if (kGetTickCount() - qwTickCount > 1000)
+		{
+			qwTickCount = kGetTickCount();
+			kPrintf("Application Processor [APIC ID : %d] Is Activated \n",
+					kGetAPICID());
+		}
+	}
+}
