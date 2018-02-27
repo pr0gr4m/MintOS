@@ -41,7 +41,18 @@
 #define APIC_DESTINATIONSHORTHAND_ALLINCLUDINGSELF	0x080000
 #define APIC_DESTINATIONSHORTHAND_ALLEXCLUDINGSELF	0x0C0000
 
+#define APIC_INTERRUPT_MASK			0x010000
+
+#define APIC_TIMERMODE_PERIODIC		0x020000
+#define APIC_TIMERMODE_ONESHOT		0x000000
+
+#define APIC_POLARITY_ACTIVELOW		0x002000
+#define APIC_POLARITY_ACTIVEHIGH	0x000000
+
 QWORD kGetLocalAPICBaseAddress(void);
 void kEnableSoftwareLocalAPIC(void);
+void kSendEOIToLocalAPIC(void);
+void kSetTaskPriority(BYTE bPriority);
+void kInitializeLocalVectorTable(void);
 
 #endif
