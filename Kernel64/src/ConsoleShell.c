@@ -12,6 +12,7 @@
 #include "FileSystem.h"
 #include "SerialPort.h"
 #include "MPConfigurationTable.h"
+#include "PIC.h"
 #include "MultiProcessor.h"
 #include "LocalAPIC.h"
 
@@ -58,6 +59,8 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
 	{ "download", "Download Data From Serial, ex) download a.txt", kDownloadFile },
 	{ "showmpinfo", "Show MP Configuration Table Information", kShowMPConfigurationTable },
 	{ "startap", "Start Application Processor", kStartApplicationProcessor },
+	{ "startsymmetricio", "Start Symmetric I/O Mode", kStartSymmetricIOMode },
+	{ "showirqintinmap", "Show IRQ->INTIN Mapping Table", kShowIRQINTINMappingTable },
 };
 
 // main loop of shell
@@ -2034,4 +2037,53 @@ static void kStartApplicationProcessor(const char* pcParameterBuffer)
 
 	kPrintf("Bootstrap Processor [APIC ID : %d] Start Application Processor\n",
 			kGetAPICID());
+}
+
+static void kStartSymmetricIOMode(const char* pcParameterBuffer)
+{
+	MPCONFIGURATIONMANAGER* pstMPManager;
+	BOOL bInterruptFlag;
+
+	if (kAnalysisMPConfigurationTable() == FALSE)
+	{
+		kPrintf("Analyze MP Configuration Table Fail\n");
+		return;
+	}
+
+	pstMPManager = kGetMPConfigurationManager();
+	if (pstMPManager->bUsePICMode == TRUE)
+	{
+		// Send to IMCR register to disable PIC Mode
+		kOutPortByte(0x22, 0x70);
+		kOutPortByte(0x23, 0x01);
+	}
+
+	kPrintf("Mask All PIC Controller Interrupt\n");
+	kMaskPICInterrupt(0xFFFF);
+
+	kPrintf("Enable Global Local APIC\n");
+	kEnableGlobalLocalAPIC();
+
+	kPrintf("Enable Software Local APIC\n");
+	kEnableSoftwareLocalAPIC();
+
+	kPrintf("Disable CPU Interrupt Flag\n");
+	bInterruptFlag = kSetInterruptFlag(FALSE);
+
+	kSetTaskPriority(0);
+
+	kInitializeLocalVectorTable();
+
+	kPrintf("Initialize IO Redirection Table\n");
+	kInitializeIORedirectionTable();
+
+	kPrintf("Restore CPU Interrupt Flag\n");
+	kSetInterruptFlag(bInterruptFlag);
+
+	kPrintf("Change Symmetric I/O Mode Complete\n");
+}
+
+static void kShowIRQINTINMappingTable(const char* pcParameterBuffer)
+{
+	kPrintIRQToINTINMap();
 }
