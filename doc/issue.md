@@ -5,4 +5,3 @@
 * Keyboard driver has a bug
 ** Convert to uppercase(>) when keep to hold the comma(.) key
 * PATA driver has a bug
-* All IRQ Map to INTIN Number 0
