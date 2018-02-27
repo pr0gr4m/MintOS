@@ -422,12 +422,12 @@ IOAPICENTRY* kFindIOAPICEntryForISA(void)
 				break;
 
 			case MP_ENTRYTYPE_BUS:
-			case MP_ENTRYTYPE_IOAPIC:
+			case MP_ENTRYTYPE_IOINTERRUPTASSIGNMENT:
 			case MP_ENTRYTYPE_LOCALINTERRUPTASSIGNMENT:
 				qwEntryAddress += 8;
 				break;
 
-			case MP_ENTRYTYPE_IOINTERRUPTASSIGNMENT:
+			case MP_ENTRYTYPE_IOAPIC:
 				pstIOAPICEntry = (IOAPICENTRY*)qwEntryAddress;
 				if (pstIOAPICEntry->bIOAPICID == pstIOAssignmentEntry->bDestinationIOAPICID)
 					return pstIOAPICEntry;
