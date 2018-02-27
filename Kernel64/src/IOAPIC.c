@@ -123,7 +123,7 @@ void kInitializeIORedirectionTable(void)
 				pstIOAssignmentEntry = (IOINTERRUPTASSIGNMENTENTRY*)qwEntryAddress;
 
 				if ((pstIOAssignmentEntry->bSourceBUSID == pstMPManager->bISABusID) &&
-						(pstIOAssignmentEntry->bInterruptType = MP_INTERRUPTTYPE_INT))
+						(pstIOAssignmentEntry->bInterruptType == MP_INTERRUPTTYPE_INT))
 				{
 					if (pstIOAssignmentEntry->bSourceBUSIRQ == 0)
 						bDestination = 0xFF;
