@@ -13,6 +13,7 @@
 #include "FileSystem.h"
 #include "SerialPort.h"
 #include "MultiProcessor.h"
+#include "LocalAPIC.h"
 
 void MainForApplicationProcessor(void);
 
@@ -131,14 +132,22 @@ void MainForApplicationProcessor(void)
 	// set IDT Table
 	kLoadIDTR(IDTR_STARTADDRESS);
 
+	kEnableSoftwareLocalAPIC();
+
+	kSetTaskPriority(0);
+
+	kInitializeLocalVectorTable();
+
+	kEnableInterrupt();
+
 	qwTickCount = kGetTickCount();
 	while (1)
 	{
 		if (kGetTickCount() - qwTickCount > 1000)
 		{
 			qwTickCount = kGetTickCount();
-			kPrintf("Application Processor [APIC ID : %d] Is Activated \n",
-					kGetAPICID());
+			//kPrintf("Application Processor [APIC ID : %d] Is Activated \n",
+			//		kGetAPICID());
 		}
 	}
 }
