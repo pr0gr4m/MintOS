@@ -353,7 +353,7 @@ void kUpdateCombinationKeyStatusAndLED(BYTE bScanCode)
 	}
 
 	// Shift scan code
-	if (bDownScanCode == 42 || bDownScanCode == 52)
+	if (bDownScanCode == 42 || bDownScanCode == 54)
 	{
 		gs_stKeyboardManager.bShiftDown = bDown;
 	}
