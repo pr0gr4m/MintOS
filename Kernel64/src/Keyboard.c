@@ -3,7 +3,6 @@
 #include "Utility.h"
 #include "Keyboard.h"
 #include "Queue.h"
-#include "Synchronization.h"
 
 /*
  * Functions about keyboard controller
@@ -441,6 +440,9 @@ BOOL kInitializeKeyboard(void)
 {
 	kInitializeQueue(&gs_stKeyQueue, gs_vstKeyQueueBuffer, KEY_MAXQUEUECOUNT,
 			sizeof(KEYDATA));
+
+	kInitializeSpinLock(&(gs_stKeyboardManager.stSpinLock));
+
 	return kActivateKeyboard();
 }
 
@@ -448,16 +450,15 @@ BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode)
 {
 	KEYDATA stData;
 	BOOL bResult = FALSE;
-	BOOL bPreviousInterrupt;
 
 	stData.bScanCode = bScanCode;
 
 	if (kConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode),
 				&(stData.bFlags)) == TRUE)
 	{
-		bPreviousInterrupt = kLockForSystemData();
+		kLockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
 		bResult = kPutQueue(&gs_stKeyQueue, &stData);
-		kUnlockForSystemData(bPreviousInterrupt);
+		kUnlockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
 	}
 	return bResult;
 }
@@ -465,13 +466,12 @@ BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode)
 BOOL kGetKeyFromKeyQueue(KEYDATA* pstData)
 {
 	BOOL bResult;
-	BOOL bPreviousInterrupt;
 
 	if (kIsQueueEmpty(&gs_stKeyQueue) == TRUE)
 		return FALSE;
 
-	bPreviousInterrupt = kLockForSystemData();
+	kLockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
 	bResult = kGetQueue(&gs_stKeyQueue, pstData);
-	kUnlockForSystemData(bPreviousInterrupt);
+	kUnlockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
 	return bResult;
 }

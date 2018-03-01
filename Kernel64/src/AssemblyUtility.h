@@ -16,6 +16,7 @@ QWORD kReadTSC(void);
 void kSwitchContext(CONTEXT* pstCurrentContext, CONTEXT* pstNextContext);
 void kHlt(void);
 BOOL kTestAndSet(volatile BYTE* pbDestination, BYTE bCompare, BYTE bSource);
+void kPause(void);
 
 void kInitializeFPU(void);
 void kSaveFPUContext(void* pvFPUContext);
@@ -27,5 +28,6 @@ WORD kInPortWord(WORD wPort);
 void kOutPortWord(WORD wPort, WORD wData);
 
 void kEnableGlobalLocalAPIC(void);
+
 
 #endif

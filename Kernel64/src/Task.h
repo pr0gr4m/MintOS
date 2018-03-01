@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "List.h"
+#include "Synchronization.h"
 
 #define TASK_REGISTERCOUNT		(5 + 19)
 #define TASK_REGSTERSIZE		8
@@ -110,6 +111,7 @@ typedef struct kTCBPoolManagerStruct
 
 typedef struct kSchedulerStruct
 {
+	SPINLOCK stSpinLock;
 	TCB* pstRunningTask;
 	int iProcessorTime;
 

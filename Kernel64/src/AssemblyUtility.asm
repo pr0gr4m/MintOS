@@ -6,7 +6,7 @@ global kInPortByte, kOutPortByte, kInPortWord, kOutPortWord
 global kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
-global kSwitchContext, kHlt, kTestAndSet
+global kSwitchContext, kHlt, kTestAndSet, kPause
 global kInitializeFPU, kSaveFPUContext, kLoadFPUContext, kSetTS, kClearTS
 global kEnableGlobalLocalAPIC
 
@@ -221,6 +221,12 @@ kSwitchContext:
 kHlt:
 	hlt
 	hlt
+	ret
+
+; Pause Processor
+; @param
+kPause:
+	pause
 	ret
 
 ; Atomic Test and Set
