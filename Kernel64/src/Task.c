@@ -4,8 +4,9 @@
 #include "Descriptor.h"
 #include "Console.h"
 #include "MultiProcessor.h"
+#include "MPConfigurationTable.h"
 
-static SCHEDULER gs_stScheduler[MAXPROCESSORCOUNT];
+static SCHEDULER gs_vstScheduler[MAXPROCESSORCOUNT];
 static TCBPOOLMANAGER gs_stTCBPoolManager;
 
 // Task Functions
@@ -91,13 +92,13 @@ TCB* kCreateTask(QWORD qwFlags, void* pvMemoryAddress, QWORD qwMemorySize,
 		return NULL;
 	}
 
-	kLockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+	kLockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
 	pstProcess = kGetProcessByThread(kGetRunningTask(bCurrentAPICID));
 	if (pstProcess == NULL)
 	{
 		kFreeTCB(pstTask->stLink.qwID);
-		kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+		kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 		return NULL;
 	}
 
@@ -119,7 +120,7 @@ TCB* kCreateTask(QWORD qwFlags, void* pvMemoryAddress, QWORD qwMemorySize,
 
 	pstTask->stThreadLink.qwID = pstTask->stLink.qwID;
 
-	kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+	kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
 	pvStackAddress = (void*)(TASK_STACKPOOLADDRESS + (TASK_STACKSIZE *
 				GETTCBOFFSET(pstTask->stLink.qwID)));
@@ -192,16 +193,16 @@ void kInitializeScheduler(void)
 		{
 			for (i = 0; i < TASK_MAXREADYLISTCOUNT; i++)
 			{
-				kInitializeList(&(gs_stScheduler[j].vstReadyList[i]));
-				gs_stScheduler[j].viExecuteCount[i] = 0;
+				kInitializeList(&(gs_vstScheduler[j].vstReadyList[i]));
+				gs_vstScheduler[j].viExecuteCount[i] = 0;
 			}
-			kInitializeList(&(gs_stScheduler[j].stWaitList));
-			kInitializeSpinLock(&(gs_stScheduler[j].stSpinLock));
+			kInitializeList(&(gs_vstScheduler[j].stWaitList));
+			kInitializeSpinLock(&(gs_vstScheduler[j].stSpinLock));
 		}
 	}
 
 	pstTask = kAllocateTCB();
-	gs_stScheduler[bCurrentAPICID].pstRunningTask = pstTask;
+	gs_vstScheduler[bCurrentAPICID].pstRunningTask = pstTask;
 
 	pstTask->bAPICID = bCurrentAPICID;
 	pstTask->bAffinity = bCurrentAPICID;
@@ -223,27 +224,27 @@ void kInitializeScheduler(void)
 	pstTask->qwStackSize = 0x100000;
 
 	// Init for calc processor rate
-	gs_stScheduler[bCurrentAPICID].qwSpendProcessorTimeInIdleTask = 0;
-	gs_stScheduler[bCurrentAPICID].qwProcessorLoad = 0;
+	gs_vstScheduler[bCurrentAPICID].qwSpendProcessorTimeInIdleTask = 0;
+	gs_vstScheduler[bCurrentAPICID].qwProcessorLoad = 0;
 
 	// Init for FPU
-	gs_stScheduler[bCurrentAPICID].qwLastFPUUsedTaskID = TASK_INVALIDID;
+	gs_vstScheduler[bCurrentAPICID].qwLastFPUUsedTaskID = TASK_INVALIDID;
 }
 
 void kSetRunningTask(BYTE bAPICID, TCB* pstTask)
 {
-	kLockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
-	gs_stScheduler[bAPICID].pstRunningTask = pstTask;
-	kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+	kLockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
+	gs_vstScheduler[bAPICID].pstRunningTask = pstTask;
+	kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 }
 
 TCB* kGetRunningTask(BYTE bAPICID)
 {
 	TCB* pstRunningTask;
 
-	kLockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
-	pstRunningTask = gs_stScheduler[bAPICID].pstRunningTask;
-	kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+	kLockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
+	pstRunningTask = gs_vstScheduler[bAPICID].pstRunningTask;
+	kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 	return pstRunningTask;
 }
 
@@ -256,19 +257,19 @@ static TCB* kGetNextTaskToRun(BYTE bAPICID)
 	{
 		for (i = 0; i < TASK_MAXREADYLISTCOUNT; i++)
 		{
-			iTaskCount = kGetListCount(&(gs_stScheduler[bAPICID].vstReadyList[i]));
+			iTaskCount = kGetListCount(&(gs_vstScheduler[bAPICID].vstReadyList[i]));
 			// Return current priority task if 
 			// task count is more than execute count
-			if (gs_stScheduler[bAPICID].viExecuteCount[i] < iTaskCount)
+			if (gs_vstScheduler[bAPICID].viExecuteCount[i] < iTaskCount)
 			{
 				pstTarget = (TCB*)kRemoveListFromHeader(
-						&(gs_stScheduler[bAPICID].vstReadyList[i]));
-				gs_stScheduler[bAPICID].viExecuteCount[i]++;
+						&(gs_vstScheduler[bAPICID].vstReadyList[i]));
+				gs_vstScheduler[bAPICID].viExecuteCount[i]++;
 				break;
 			}
 			else
 			{
-				gs_stScheduler[bAPICID].viExecuteCount[i] = 0;
+				gs_vstScheduler[bAPICID].viExecuteCount[i] = 0;
 			}
 		}
 
@@ -287,7 +288,7 @@ static BOOL kAddTaskToReadyList(BYTE bAPICID, TCB* pstTask)
 	if (bPriority >= TASK_MAXREADYLISTCOUNT)
 		return FALSE;
 
-	kAddListToTail(&(gs_stScheduler[bAPICID].vstReadyList[bPriority]), pstTask);
+	kAddListToTail(&(gs_vstScheduler[bAPICID].vstReadyList[bPriority]), pstTask);
 	return TRUE;
 }
 
@@ -306,7 +307,7 @@ static TCB* kRemoveTaskFromReadyList(BYTE bAPICID, QWORD qwTaskID)
 		return NULL;
 
 	bPriority = GETPRIORITY(pstTarget->qwFlags);
-	pstTarget = kRemoveList(&(gs_stScheduler[bAPICID].vstReadyList[bPriority]), qwTaskID);
+	pstTarget = kRemoveList(&(gs_vstScheduler[bAPICID].vstReadyList[bPriority]), qwTaskID);
 	return pstTarget;
 }
 
@@ -353,7 +354,7 @@ BOOL kChangePriority(QWORD qwTaskID, BYTE bPriority)
 		return FALSE;
 
 	// Just change priority if current running task
-	pstTarget = gs_stScheduler[bAPICID].pstRunningTask;
+	pstTarget = gs_vstScheduler[bAPICID].pstRunningTask;
 	if (pstTarget->stLink.qwID == qwTaskID)
 	{
 		SETPRIORITY(pstTarget->qwFlags, bPriority);
@@ -361,7 +362,7 @@ BOOL kChangePriority(QWORD qwTaskID, BYTE bPriority)
 	// Seek from ready list and change if not current running task
 	else
 	{
-		pstTarget = kRemoveTaskFromReadyList(qwTaskID);
+		pstTarget = kRemoveTaskFromReadyList(bAPICID, qwTaskID);
 		if (pstTarget == NULL)
 		{
 			// if not in ready list
@@ -375,11 +376,11 @@ BOOL kChangePriority(QWORD qwTaskID, BYTE bPriority)
 		{
 			// Re-insert to ready list after changing
 			SETPRIORITY(pstTarget->qwFlags, bPriority);
-			kAddTaskToReadyList(pstTarget);
+			kAddTaskToReadyList(bAPICID, pstTarget);
 		}
 	}
 
-	kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+	kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 
 	return TRUE;
 }
@@ -394,35 +395,35 @@ BOOL kSchedule(void)
 
 	bCurrentAPICID = kGetAPICID();
 
-	if (kGetReadyTaskCount() < 1)
+	if (kGetReadyTaskCount(bCurrentAPICID) < 1)
 	{
-		kSetInterrupt(bPreviousInterrupt);
+		kSetInterruptFlag(bPreviousInterrupt);
 		return FALSE;
 	}
 
-	kLockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+	kLockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
 	// Get Next Task
 	pstNextTask = kGetNextTaskToRun(bCurrentAPICID);
 	if (pstNextTask == NULL)
 	{
-		kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+		kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 		kSetInterruptFlag(bPreviousInterrupt);
 		return FALSE;
 	}
 
 	// Add Current Running Task to Ready List
-	pstRunningTask = gs_stScheduler[bCurrentAPICID].pstRunningTask;
-	gs_stScheduler[bCurrentAPICID].pstRunningTask = pstNextTask;
+	pstRunningTask = gs_vstScheduler[bCurrentAPICID].pstRunningTask;
+	gs_vstScheduler[bCurrentAPICID].pstRunningTask = pstNextTask;
 
 	if ((pstRunningTask->qwFlags & TASK_FLAGS_IDLE) == TASK_FLAGS_IDLE)
 	{
-		gs_stScheduler.qwSpendProcessorTimeInIdleTask +=
-			TASK_PROCESSORTIME - gs_stScheduler.iProcessorTime;
+		gs_vstScheduler[bCurrentAPICID].qwSpendProcessorTimeInIdleTask +=
+			TASK_PROCESSORTIME - gs_vstScheduler[bCurrentAPICID].iProcessorTime;
 	}
 
 	// Set TS if next task is not last fpu used task
-	if (gs_stScheduler[bCurrentAPICID].qwLastFPUUsedTaskID != pstNextTask->stLink.qwID)
+	if (gs_vstScheduler[bCurrentAPICID].qwLastFPUUsedTaskID != pstNextTask->stLink.qwID)
 	{
 		kSetTS();
 	}
@@ -431,18 +432,18 @@ BOOL kSchedule(void)
 		kClearTS();
 	}
 
-	gs_stScheduler[bCurrentAPICID].iProcessorTime = TASK_PROCESSORTIME;
+	gs_vstScheduler[bCurrentAPICID].iProcessorTime = TASK_PROCESSORTIME;
 
 	if (pstRunningTask->qwFlags & TASK_FLAGS_ENDTASK)
 	{
-		kAddListToTail(&(gs_stScheduler[bCurrentAPICID].stWaitList), pstRunningTask);
-		kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+		kAddListToTail(&(gs_vstScheduler[bCurrentAPICID].stWaitList), pstRunningTask);
+		kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 		kSwitchContext(NULL, &(pstNextTask->stContext));
 	}
 	else
 	{
 		kAddTaskToReadyList(bCurrentAPICID, pstRunningTask);
-		kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+		kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 		kSwitchContext(&(pstRunningTask->stContext), &(pstNextTask->stContext));
 	}
 
@@ -460,12 +461,12 @@ BOOL kScheduleInInterrupt(void)
 
 	bCurrentAPICID = kGetAPICID();
 
-	kLockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+	kLockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
 	pstNextTask = kGetNextTaskToRun(bCurrentAPICID);
 	if (pstNextTask == NULL)
 	{
-		kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+		kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 		return FALSE;
 	}
 
@@ -477,17 +478,17 @@ BOOL kScheduleInInterrupt(void)
 
 	pcContextAddress = (char*)qwISTStartAddress - sizeof(CONTEXT);
 
-	pstRunningTask = gs_stScheduler[bCurrentAPICID].pstRunningTask;
-	gs_stScheduler[bCurrentAPICID].pstRunningTask = pstNextTask;
+	pstRunningTask = gs_vstScheduler[bCurrentAPICID].pstRunningTask;
+	gs_vstScheduler[bCurrentAPICID].pstRunningTask = pstNextTask;
 
 	if ((pstRunningTask->qwFlags & TASK_FLAGS_IDLE) == TASK_FLAGS_IDLE)
 	{
-		gs_stScheduler[bCurrentAPICID].qwSpendProcessorTimeInIdleTask += TASK_PROCESSORTIME;
+		gs_vstScheduler[bCurrentAPICID].qwSpendProcessorTimeInIdleTask += TASK_PROCESSORTIME;
 	}
 
 	if (pstRunningTask->qwFlags & TASK_FLAGS_ENDTASK)
 	{
-		kAddListToTail(&(gs_stScheduler[bCurrentAPICID].stWaitList), pstRunningTask);
+		kAddListToTail(&(gs_vstScheduler[bCurrentAPICID].stWaitList), pstRunningTask);
 	}
 	else
 	{
@@ -495,7 +496,7 @@ BOOL kScheduleInInterrupt(void)
 	}
 
 	// Set TS if next task is not last fpu used task
-	if (gs_stScheduler[bCurrentAPICID].qwLastFPUUsedTaskID != pstNextTask->stLink.qwID)
+	if (gs_vstScheduler[bCurrentAPICID].qwLastFPUUsedTaskID != pstNextTask->stLink.qwID)
 	{
 		kSetTS();
 	}
@@ -504,7 +505,7 @@ BOOL kScheduleInInterrupt(void)
 		kClearTS();
 	}
 
-	kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+	kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
 	kMemCpy(pcContextAddress, &(pstNextTask->stContext), sizeof(CONTEXT));
 
@@ -513,21 +514,21 @@ BOOL kScheduleInInterrupt(void)
 		kAddTaskToSchedulerWithLoadBalancing(pstRunningTask);
 	}
 
-	gs_stScheduler[bCurrentAPICID].iProcessorTime = TASK_PROCESSORTIME;
+	gs_vstScheduler[bCurrentAPICID].iProcessorTime = TASK_PROCESSORTIME;
 	return TRUE;
 }
 
 void kDecreaseProcessorTime(BYTE bAPICID)
 {
-	if (gs_stScheduler[bAPICID].iProcessorTime > 0)
+	if (gs_vstScheduler[bAPICID].iProcessorTime > 0)
 	{
-		gs_stScheduler[bAPICID].iProcessorTime--;
+		gs_vstScheduler[bAPICID].iProcessorTime--;
 	}
 }
 
 BOOL kIsProcessorTimeExpired(BYTE bAPICID)
 {
-	if (gs_stScheduler[bAPICID].iProcessorTime <= 0)
+	if (gs_vstScheduler[bAPICID].iProcessorTime <= 0)
 		return TRUE;
 	return FALSE;
 }
@@ -541,7 +542,7 @@ BOOL kEndTask(QWORD qwTaskID)
 	if (kFindSchedulerOfTaskAndLock(qwTaskID, &bAPICID) == FALSE)
 		return FALSE;
 
-	pstTarget = gs_stScheduler[bAPICID].pstRunningTask;
+	pstTarget = gs_vstScheduler[bAPICID].pstRunningTask;
 	if (pstTarget->stLink.qwID == qwTaskID)
 	{
 		// set End Task bit and switch task
@@ -549,7 +550,7 @@ BOOL kEndTask(QWORD qwTaskID)
 		pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 		SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
 
-		kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+		kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 
 		if (kGetAPICID() == bAPICID)
 		{
@@ -571,20 +572,20 @@ BOOL kEndTask(QWORD qwTaskID)
 			pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 			SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
 		}
-		kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+		kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 		return TRUE;
 	}
 
 	pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 	SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
-	kAddListToTail(&(gs_stScheduler[bAPICID].stWaitList), pstTarget);
-	kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+	kAddListToTail(&(gs_vstScheduler[bAPICID].stWaitList), pstTarget);
+	kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 	return TRUE;
 }
 
 void kExitTask(void)
 {
-	kEndTask(gs_stScheduler[kGetAPICID()].pstRunningTask->stLink.qwID);
+	kEndTask(gs_vstScheduler[kGetAPICID()].pstRunningTask->stLink.qwID);
 }
 
 int kGetReadyTaskCount(BYTE bAPICID)
@@ -592,14 +593,14 @@ int kGetReadyTaskCount(BYTE bAPICID)
 	int iTotalCount = 0;
 	int i;
 
-	kLockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+	kLockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 
 	for (i = 0; i < TASK_MAXREADYLISTCOUNT; i++)
 	{
-		iTotalCount += kGetListCount(&(gs_stScheduler[bAPICID].vstReadyList[i]));
+		iTotalCount += kGetListCount(&(gs_vstScheduler[bAPICID].vstReadyList[i]));
 	}
 
-	kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+	kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 	return iTotalCount;
 }
 
@@ -609,9 +610,9 @@ int kGetTaskCount(BYTE bAPICID)
 
 	iTotalCount = kGetReadyTaskCount(bAPICID);
 
-	kLockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
-	iTotalCount += kGetListCount(&(gs_stScheduler[bAPICID].stWaitList)) + 1;
-	kUnlockForSpinLock(&(gs_stScheduler[bAPICID].stSpinLock));
+	kLockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
+	iTotalCount += kGetListCount(&(gs_vstScheduler[bAPICID].stWaitList)) + 1;
+	kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
 	return iTotalCount;
 }
 
@@ -636,7 +637,7 @@ BOOL kIsTaskExist(QWORD qwID)
 
 QWORD kGetProcessorLoad(BYTE bAPICID)
 {
-	return gs_stScheduler[bAPICID].qwProcessorLoad;
+	return gs_vstScheduler[bAPICID].qwProcessorLoad;
 }
 
 
@@ -722,7 +723,7 @@ static BYTE kFindSchedulerOfMinimumTaskCount(const TCB* pstTask)
 					bPriority]));
 		
 		if ((iTempTaskCount + 2 <= iCurrentTaskCount) &&
-				(iTempTaskCount < iMinTaskCOunt))
+				(iTempTaskCount < iMinTaskCount))
 		{
 			bMinCoreIndex = i;
 			iMinTaskCount = iTempTaskCount;
@@ -746,7 +747,7 @@ BOOL kChangeProcessorAffinity(QWORD qwTaskID, BYTE bAffinity)
 		return FALSE;
 
 	pstTarget = gs_vstScheduler[bAPICID].pstRunningTask;
-	if (pstRaget->stLink.qwID == qwTaskID)
+	if (pstTarget->stLink.qwID == qwTaskID)
 	{
 		pstTarget->bAffinity = bAffinity;
 		kUnlockForSpinLock(&(gs_vstScheduler[bAPICID].stSpinLock));
@@ -786,22 +787,22 @@ void kIdleTask(void)
 
 	bCurrentAPICID = kGetAPICID();
 
-	qwLastSpendTickInIdleTask = gs_stScheduler[bCurrentAPICID].qwSpendProcessorTimeInIdleTask;
+	qwLastSpendTickInIdleTask = gs_vstScheduler[bCurrentAPICID].qwSpendProcessorTimeInIdleTask;
 	qwLastMeasureTickCount = kGetTickCount();
 
 	while (1)
 	{
 		qwCurrentMeasureTickCount = kGetTickCount();
-		qwCurrentSpendTickInIdleTask = gs_stScheduler[bCurrentAPICID].
+		qwCurrentSpendTickInIdleTask = gs_vstScheduler[bCurrentAPICID].
 			qwSpendProcessorTimeInIdleTask;
 
 		if (qwCurrentMeasureTickCount - qwLastMeasureTickCount == 0)
 		{
-			gs_stScheduler[bCurrentAPICID].qwProcessorLoad = 0;
+			gs_vstScheduler[bCurrentAPICID].qwProcessorLoad = 0;
 		}
 		else
 		{
-			gs_stScheduler[bCurrentAPICID].qwProcessorLoad = 100 -
+			gs_vstScheduler[bCurrentAPICID].qwProcessorLoad = 100 -
 				(qwCurrentSpendTickInIdleTask - qwLastSpendTickInIdleTask) *
 				100 / (qwCurrentMeasureTickCount - qwLastMeasureTickCount);
 		}
@@ -812,14 +813,14 @@ void kIdleTask(void)
 		// Processor Sleep
 		kHaltProcessorByLoad(bCurrentAPICID);
 
-		if (kGetListCount(&(gs_stScheduler[bCurrentAPICID].stWaitList)) > 0)
+		if (kGetListCount(&(gs_vstScheduler[bCurrentAPICID].stWaitList)) > 0)
 		{
 			while (1)
 			{
-				kLockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+				kLockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 				pstTask = kRemoveListFromHeader(&(
-							gs_stScheduler[bCurrentAPICID].stWaitList));
-				kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+							gs_vstScheduler[bCurrentAPICID].stWaitList));
+				kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 				if (pstTask == NULL)
 				{
 					break;
@@ -832,13 +833,13 @@ void kIdleTask(void)
 					for (i = 0; i < iCount; i++)
 					{
 						kLockForSpinLock(&(
-									gs_stScheduler[bCurrentAPICID].stSpinLock));
+									gs_vstScheduler[bCurrentAPICID].stSpinLock));
 						pstThreadLink = (TCB*)kRemoveListFromHeader(
 								&(pstTask->stChildThreadList));
 						if (pstThreadLink == NULL)
 						{
 							kUnlockForSpinLock(&(
-										gs_stScheduler[bCurrentAPICID].stSpinLock));
+										gs_vstScheduler[bCurrentAPICID].stSpinLock));
 							break;
 						}
 
@@ -850,16 +851,16 @@ void kIdleTask(void)
 						qwChildThreadID = pstChildThread->stLink.qwID;
 
 						kUnlockForSpinLock(&(
-									gs_stScheduler[bCurrentAPICID].stSpinLock));
+									gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
 						kEndTask(qwChildThreadID);
 					}
 
 					if (kGetListCount(&(pstTask->stChildThreadList)) > 0)
 					{
-						kLockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
-						kAddListToTail(&(gs_stScheduler[bCurrentAPICID].stWaitList), pstTask);
-						kUnlockForSpinLock(&(gs_stScheduler[bCurrentAPICID].stSpinLock));
+						kLockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
+						kAddListToTail(&(gs_vstScheduler[bCurrentAPICID].stWaitList), pstTask);
+						kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 						continue;
 					}
 					else
@@ -895,18 +896,18 @@ void kIdleTask(void)
 
 void kHaltProcessorByLoad(BYTE bAPICID)
 {
-	if (gs_stScheduler[bAPICID].qwProcessorLoad < 40)
+	if (gs_vstScheduler[bAPICID].qwProcessorLoad < 40)
 	{
 		kHlt();
 		kHlt();
 		kHlt();
 	}
-	else if (gs_stScheduler[bAPICID].qwProcessorLoad < 80)
+	else if (gs_vstScheduler[bAPICID].qwProcessorLoad < 80)
 	{
 		kHlt();
 		kHlt();
 	}
-	else if (gs_stScheduler[bAPICID].qwProcessorLoad < 95)
+	else if (gs_vstScheduler[bAPICID].qwProcessorLoad < 95)
 	{
 		kHlt();
 	}
@@ -914,10 +915,10 @@ void kHaltProcessorByLoad(BYTE bAPICID)
 
 QWORD kGetLastFPUUsedTaskID(BYTE bAPICID)
 {
-	return gs_stScheduler[bAPICID].qwLastFPUUsedTaskID;
+	return gs_vstScheduler[bAPICID].qwLastFPUUsedTaskID;
 }
 
 void kSetLastFPUUsedTaskID(BYTE bAPICID, QWORD qwTaskID)
 {
-	gs_stScheduler[bAPICID].qwLastFPUUsedTaskID = qwTaskID;
+	gs_vstScheduler[bAPICID].qwLastFPUUsedTaskID = qwTaskID;
 }

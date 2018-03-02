@@ -154,6 +154,7 @@ void kTimerHandler(int iVectorNumber)
 	char vcBuffer[] = "[INT:  , ]";
 	static int g_iTimerInterruptCount = 0;
 	int iIRQ;
+	BYTE bCurrentAPICID;
 
 	vcBuffer[5] = '0' + iVectorNumber / 10;
 	vcBuffer[6] = '0' + iVectorNumber % 10;
@@ -165,15 +166,16 @@ void kTimerHandler(int iVectorNumber)
 	kSendEOI(iIRQ);
 	kIncreaseInterruptCount(iIRQ);
 
-	// Only BSP handle IRQ 0
-	if (kGetAPICID() == 0)
+	bCurrentAPICID = kGetAPICID();
+	if (bCurrentAPICID == 0)
 	{
 		g_qwTickCount++;
-		kDecreaseProcessorTime();
-		if (kIsProcessorTimeExpired() == TRUE)
-		{
-			kScheduleInInterrupt();
-		}
+	}
+
+	kDecreaseProcessorTime(bCurrentAPICID);
+	if (kIsProcessorTimeExpired(bCurrentAPICID) == TRUE)
+	{
+		kScheduleInInterrupt();
 	}
 }
 
@@ -181,6 +183,7 @@ void kDeviceNotAvailableHandler(int iVectorNumber)
 {
 	TCB* pstFPUTask, * pstCurrentTask;
 	QWORD qwLastFPUTaskID;
+	BYTE bCurrentAPICID;
 
 	char vcBuffer[] = "[EXC:  , ]";
 	static int g_iFPUInterruptCount = 0;
@@ -192,10 +195,12 @@ void kDeviceNotAvailableHandler(int iVectorNumber)
 	g_iFPUInterruptCount = (g_iFPUInterruptCount + 1) % 10;
 	kPrintStringXY(0, 0, vcBuffer);
 
+	bCurrentAPICID = kGetAPICID();
+
 	kClearTS();
 
-	qwLastFPUTaskID = kGetLastFPUUsedTaskID();
-	pstCurrentTask = kGetRunningTask();
+	qwLastFPUTaskID = kGetLastFPUUsedTaskID(bCurrentAPICID);
+	pstCurrentTask = kGetRunningTask(bCurrentAPICID);
 
 	if (qwLastFPUTaskID == pstCurrentTask->stLink.qwID)
 	{
@@ -222,7 +227,7 @@ void kDeviceNotAvailableHandler(int iVectorNumber)
 		kLoadFPUContext(pstCurrentTask->vqwFPUContext);
 	}
 
-	kSetLastFPUUsedTaskID(pstCurrentTask->stLink.qwID);
+	kSetLastFPUUsedTaskID(bCurrentAPICID, pstCurrentTask->stLink.qwID);
 }
 
 void kHDDHandler(int iVectorNumber)

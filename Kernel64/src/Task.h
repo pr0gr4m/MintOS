@@ -154,8 +154,8 @@ static TCB* kGetNextTaskToRun(BYTE bAPICID);
 static BOOL kAddTaskToReadyList(BYTE bAPICID, TCB* pstTask);
 BOOL kSchedule(void);
 BOOL kScheduleInInterrupt(void);
-void kDecreaseProcessorTime(void);
-BOOL kIsProcessorTimeExpired(void);
+void kDecreaseProcessorTime(BYTE bAPICID);
+BOOL kIsProcessorTimeExpired(BYTE bAPICID);
 static TCB* kRemoveTaskFromReadyList(BYTE bAPICID, QWORD qwTaskID);
 static BOOL kFindSchedulerOfTaskAndLock(QWORD qwTaskID, BYTE* pbAPICID);
 
@@ -166,7 +166,7 @@ int kGetReadyTaskCount(BYTE bAPICID);
 int kGetTaskCount(BYTE bAPICID);
 TCB* kGetTCBInTCBPool(int iOffset);
 BOOL kIsTaskExist(QWORD qwID);
-QWORD kGetProcessorLoad(void);
+QWORD kGetProcessorLoad(BYTE bAPICID);
 static TCB* kGetProcessByThread(TCB* pstThread);
 
 void kAddTaskToSchedulerWithLoadBalancing(TCB* pstTask);

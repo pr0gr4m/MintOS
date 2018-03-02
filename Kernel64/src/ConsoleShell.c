@@ -407,7 +407,7 @@ static void kTestTask1(void)
 	CHARACTER* pstScreen = (CHARACTER*)CONSOLE_VIDEOMEMORYADDRESS;
 	TCB* pstRunningTask;
 
-	pstRunningTask = kGetRunningTask();
+	pstRunningTask = kGetRunningTask(kGetAPICID());
 	iMargin = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) % 10;
 
 	for (j = 0; j < 20000; j++)
@@ -451,7 +451,7 @@ static void kTestTask2(void)
 	TCB* pstRunningTask;
 	char vcData[4] = { '-', '\\', '|', '/' };
 
-	pstRunningTask = kGetRunningTask();
+	pstRunningTask = kGetRunningTask(kGetAPICID());
 	iOffset = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) * 2;
 	iOffset = CONSOLE_WIDTH * CONSOLE_HEIGHT -
 		(iOffset % (CONSOLE_WIDTH * CONSOLE_HEIGHT));
@@ -483,7 +483,7 @@ static void kCreateTestTask(const char* pcParameterBuffer)
 			for (i = 0; i < kAToI(vcCount, 10); i++)
 			{
 				if (kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, 
-							(QWORD)kTestTask1) == NULL)
+							(QWORD)kTestTask1, TASK_LOADBALANCINGID) == NULL)
 					break;
 			}
 			
@@ -495,7 +495,7 @@ static void kCreateTestTask(const char* pcParameterBuffer)
 			for (i = 0; i < kAToI(vcCount, 10); i++)
 			{
 				if (kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, 
-							(QWORD)kTestTask2) == NULL)
+							(QWORD)kTestTask2, TASK_LOADBALANCINGID) == NULL)
 					break;
 			}
 
@@ -544,7 +544,7 @@ static void kShowTaskList(const char* pcParameterBuffer)
 	TCB* pstTCB;
 	int iCount = 0;
 
-	kPrintf("========== Task Total Count [%d] ==========\n", kGetTaskCount());
+	kPrintf("========== Task Total Count [%d] ==========\n", kGetTaskCount(kGetAPICID()));
 
 	for (i = 0; i < TASK_MAXCOUNT; i++)
 	{
@@ -638,7 +638,7 @@ static void kKillTask(const char* pcParameterBuffer)
 
 static void kCPULoad(const char* pcParameterBuffer)
 {
-	kPrintf("Processor Load : %d%%\n", kGetProcessorLoad());
+	//kPrintf("Processor Load : %d%%\n", kGetProcessorLoad());
 }
 
 static MUTEX gs_stMutex;
@@ -659,7 +659,7 @@ static void kPrintNumberTask(void)
 	for (i = 0; i < 5; i++)
 	{
 		kLock(&(gs_stMutex));
-		kPrintf("Task ID [0x%Q] Value[%d]\n", kGetRunningTask()->stLink.qwID,
+		kPrintf("Task ID [0x%Q] Value[%d]\n", kGetRunningTask(kGetAPICID())->stLink.qwID,
 				gs_qwAdder);
 
 		gs_qwAdder += 1;
@@ -688,7 +688,7 @@ static void kTestMutex(const char* pcParameterBuffer)
 	for (i = 0; i < 3; i++)
 	{
 		kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, 
-				(QWORD)kPrintNumberTask);
+				(QWORD)kPrintNumberTask, kGetAPICID());
 	}
 	kPrintf("Wait Until %d Task End... \n", i);
 	kGetCh();
@@ -700,7 +700,8 @@ static void kCreateThreadTask(void)
 
 	for (i = 0; i < 3; i++)
 	{
-		kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD)kTestTask2);
+		kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD)kTestTask2,
+				TASK_LOADBALANCINGID);
 	}
 
 	while (1)
@@ -714,7 +715,7 @@ static void kTestThread(const char* pcParameterBuffer)
 	TCB* pstProcess;
 
 	pstProcess = kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_PROCESS, (void*)0xEEEEEEEE, 0x1000,
-			(QWORD)kCreateThreadTask);
+			(QWORD)kCreateThreadTask, TASK_LOADBALANCINGID);
 	if (pstProcess != NULL)
 	{
 		kPrintf("Process [0x%Q] Create Success\n", pstProcess->stLink.qwID);
@@ -773,7 +774,7 @@ static void kMatrixProcess(void)
 	for (i = 0; i < 300; i++)
 	{
 		if (kCreateTask(TASK_FLAGS_THREAD | TASK_FLAGS_LOW, 0, 0,
-					(QWORD)kDropCharacterThread) == NULL)
+					(QWORD)kDropCharacterThread, TASK_LOADBALANCINGID) == NULL)
 			break;
 
 		kSleep(kRandom() % 5 + 5);
@@ -787,7 +788,7 @@ static void kShowMatrix(const char* pcParamterBuffer)
 {
 	TCB* pstProcess;
 	pstProcess = kCreateTask(TASK_FLAGS_PROCESS | TASK_FLAGS_LOW,
-			(void*)0xE00000, 0xE00000, (QWORD)kMatrixProcess);
+			(void*)0xE00000, 0xE00000, (QWORD)kMatrixProcess, TASK_LOADBALANCINGID);
 	if (pstProcess != NULL)
 	{
 		kPrintf("Matrix Process [0x%Q] Create Success\n");
@@ -811,7 +812,7 @@ static void kFPUTestTask(void)
 	char vcData[4] = { '-', '\\', '|', '/' };
 	CHARACTER* pstScreen = (CHARACTER*)CONSOLE_VIDEOMEMORYADDRESS;
 
-	pstRunningTask = kGetRunningTask();
+	pstRunningTask = kGetRunningTask(kGetAPICID());
 
 	iOffset = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) * 2;
 	iOffset = CONSOLE_WIDTH * CONSOLE_HEIGHT -
@@ -860,7 +861,8 @@ static void kTestPIE(const char* pcParamterBuffer)
 
 	for (i = 0; i < 100; i++)
 	{
-		kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD)kFPUTestTask);
+		kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD)kFPUTestTask,
+				TASK_LOADBALANCINGID);
 	}
 }
 
@@ -942,7 +944,7 @@ static void kRandomAllocationTask(void)
 	int i, j;
 	int iY;
 
-	pstTask = kGetRunningTask();
+	pstTask = kGetRunningTask(kGetAPICID());
 	iY = (pstTask->stLink.qwID) % 15 + 9;
 
 	for (j = 0; j < 10; j++)
@@ -994,7 +996,8 @@ static void kTestRandomAllocation(const char* pcParameterBuffer)
 	int i;
 
 	for (i = 0; i < 1000; i++)
-		kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD, 0, 0, (QWORD)kRandomAllocationTask);
+		kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD, 0, 0, 
+				(QWORD)kRandomAllocationTask, TASK_LOADBALANCINGID);
 }
 
 static void kShowHDDInformation(const char* pcParameterBuffer)

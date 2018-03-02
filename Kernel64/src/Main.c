@@ -115,7 +115,7 @@ void Main(void)
 	kPrintf("PASS\n");
 
 	kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM | TASK_FLAGS_IDLE, 0, 0,
-			(QWORD)kIdleTask);
+			(QWORD)kIdleTask, kGetAPICID());
 	kStartConsoleShell();
 }
 
@@ -132,6 +132,8 @@ void MainForApplicationProcessor(void)
 	// set IDT Table
 	kLoadIDTR(IDTR_STARTADDRESS);
 
+	kInitializeScheduler();
+
 	kEnableSoftwareLocalAPIC();
 
 	kSetTaskPriority(0);
@@ -140,14 +142,8 @@ void MainForApplicationProcessor(void)
 
 	kEnableInterrupt();
 
-	qwTickCount = kGetTickCount();
-	while (1)
-	{
-		if (kGetTickCount() - qwTickCount > 1000)
-		{
-			qwTickCount = kGetTickCount();
-			//kPrintf("Application Processor [APIC ID : %d] Is Activated \n",
-			//		kGetAPICID());
-		}
-	}
+	kPrintf("Application Processor [APIC ID : %d] Is Activated \n",
+			kGetAPICID());
+
+	kIdleTask();
 }
