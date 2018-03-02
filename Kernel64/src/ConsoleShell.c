@@ -64,6 +64,9 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
 	{ "showirqintinmap", "Show IRQ->INTIN Mapping Table", kShowIRQINTINMappingTable },
 	{ "showintproccount", "Show Interrupt Processing Count", kShowInterruptProcessingCount },
 	{ "startintloadbal", "Start Interrupt Load Balancing", kStartInterruptLoadBalancing },
+	{ "starttaskloadbal", "Start Task Load Balancing", kStartTaskLoadBalancing },
+	{ "changeaffinity", "Change Task Affinity, ex) changeaffinity 1(ID) 0xFF(Affinity)",
+		kChangeTaskAffinity },
 };
 
 // main loop of shell
@@ -466,6 +469,33 @@ static void kTestTask2(void)
 	}
 }
 
+static void kTestTask3(void)
+{
+	QWORD qwTaskID;
+	TCB* pstRunningTask;
+	BYTE bLastLocalAPICID;
+	QWORD qwLastTick;
+
+	pstRunningTask = kGetRunningTask(kGetAPICID());
+	qwTaskID = pstRunningTask->stLink.qwID;
+	kPrintf("Test Task 3 Started. Task ID = 0x%q, Local APIC ID = 0x%x\n",
+			qwTaskID, kGetAPICID());
+
+	bLastLocalAPICID = kGetAPICID();
+
+	while (1)
+	{
+		if (bLastLocalAPICID != kGetAPICID())
+		{
+			kPrintf("Core Changed. Task ID = 0x%q, Previous Local APIC ID = 0x%x "
+					"Current = 0x%x\n", qwTaskID, bLastLocalAPICID, kGetAPICID());
+			bLastLocalAPICID = kGetAPICID();
+		}
+
+		kSchedule();
+	}
+}
+
 static void kCreateTestTask(const char* pcParameterBuffer)
 {
 	PARAMETERLIST stList;
@@ -543,15 +573,49 @@ static void kShowTaskList(const char* pcParameterBuffer)
 	int i;
 	TCB* pstTCB;
 	int iCount = 0;
+	int iTotalTaskCount = 0;
+	char vcBuffer[20];
+	int iRemainLength;
+	int iProcessorCount;
 
-	kPrintf("========== Task Total Count [%d] ==========\n", kGetTaskCount(kGetAPICID()));
+	iProcessorCount = kGetProcessorCount();
+
+	for (i = 0; i < iProcessorCount; i++)
+		iTotalTaskCount += kGetTaskCount(i);
+
+	kPrintf("========== Task Total Count [%d] ==========\n", iTotalTaskCount);
+
+	if (iProcessorCount > 1)
+	{
+		for (i = 0; i < iProcessorCount; i++)
+		{
+			if ((i != 0) && ((i % 4) == 0))
+				kPrintf("\n");
+
+			kSPrintf(vcBuffer, "Core %d : %d", i, kGetTaskCount(i));
+			kPrintf(vcBuffer);
+
+			iRemainLength = 19 - kStrLen(vcBuffer);
+			kMemSet(vcBuffer, ' ', iRemainLength);
+			vcBuffer[iRemainLength] = '\0';
+			kPrintf(vcBuffer);
+		}
+
+		kPrintf("\nPress any key to continue... ('q' to quit) : ");
+		if (kGetCh() == 'q')
+		{
+			kPrintf("\n");
+			return;
+		}
+		kPrintf("\n");
+	}
 
 	for (i = 0; i < TASK_MAXCOUNT; i++)
 	{
 		pstTCB = kGetTCBInTCBPool(i);
 		if ((pstTCB->stLink.qwID >> 32) != 0)
 		{
-			if ((iCount != 0) && ((iCount % 10) == 0))
+			if ((iCount != 0) && ((iCount % 6) == 0))
 			{
 				kPrintf("Press any key to continue...('q' is quit) : ");
 				if (kGetCh() == 'q')
@@ -565,6 +629,7 @@ static void kShowTaskList(const char* pcParameterBuffer)
 			kPrintf("[%d] Task ID[0x%Q], Priority[%d], Flags[0x%Q], Thread[%d]\n", 1 + iCount++,
 					pstTCB->stLink.qwID, GETPRIORITY(pstTCB->qwFlags),
 					pstTCB->qwFlags, kGetListCount(&(pstTCB->stChildThreadList)));
+			kPrintf("    Core ID[0x%X] CPU Affinity[0x%X]\n", pstTCB->bAPICID, pstTCB->bAffinity);
 			kPrintf("    Parent PID[0x%Q], Memory Address[0x%Q], Size[0x%Q]\n",
 					pstTCB->qwParentProcessID, pstTCB->pvMemoryAddress,
 					pstTCB->qwMemorySize);
@@ -638,7 +703,26 @@ static void kKillTask(const char* pcParameterBuffer)
 
 static void kCPULoad(const char* pcParameterBuffer)
 {
-	//kPrintf("Processor Load : %d%%\n", kGetProcessorLoad());
+	int i;
+	char vcBuffer[50];
+	int iRemainLength;
+
+	kPrintf("========== Processor Load ==========\n");
+
+	for (i = 0; i < kGetProcessorCount(); i++)
+	{
+		if ((i != 0) && ((i % 4) == 0))
+			kPrintf("\n");
+
+		kSPrintf(vcBuffer, "Core %d : %d%%", i, kGetProcessorLoad(i));
+		kPrintf("%s", vcBuffer);
+
+		iRemainLength = 19 - kStrLen(vcBuffer);
+		kMemSet(vcBuffer, ' ', iRemainLength);
+		vcBuffer[iRemainLength] = '\0';
+		kPrintf(vcBuffer);
+	}
+	kPrintf("\n");
 }
 
 static MUTEX gs_stMutex;
@@ -2168,4 +2252,43 @@ static void kStartInterruptLoadBalancing(const char* pcParameterBuffer)
 {
 	kPrintf("Start Interrupt Load Balancing\n");
 	kSetInterruptLoadBalancing(TRUE);
+}
+
+static void kStartTaskLoadBalancing(const char* pcParameterBuffer)
+{
+	int i;
+
+	kPrintf("Start Task Load Balancing\n");
+
+	for (i = 0; i < MAXPROCESSORCOUNT; i++)
+		kSetTaskLoadBalancing(i, TRUE);
+}
+
+static void kChangeTaskAffinity(const char* pcParameterBuffer)
+{
+	PARAMETERLIST stList;
+	char vcID[30];
+	char vcAffinity[30];
+	QWORD qwID;
+	BYTE bAffinity;
+
+	kInitializeParameter(&stList, pcParameterBuffer);
+	kGetNextParameter(&stList, vcID);
+	kGetNextParameter(&stList, vcAffinity);
+
+	if (kMemCmp(vcID, "0x", 2) == 0)
+		qwID = kAToI(vcID + 2, 16);
+	else
+		qwID = kAToI(vcID, 10);
+
+	if (kMemCmp(vcAffinity, "0x", 2) == 0)
+		bAffinity = kAToI(vcID + 2, 16);
+	else
+		bAffinity = kAToI(vcID, 10);
+
+	kPrintf("Change Task Affinity ID [0x%q] Affinity [0x%x] ", qwID, bAffinity);
+	if (kChangeProcessorAffinity(qwID, bAffinity) == TRUE)
+		kPrintf("Success\n");
+	else
+		kPrintf("Fail\n");
 }
