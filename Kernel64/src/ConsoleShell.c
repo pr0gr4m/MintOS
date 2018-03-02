@@ -521,7 +521,6 @@ static void kCreateTestTask(const char* pcParameterBuffer)
 			break;
 
 		case 2:
-		default:
 			for (i = 0; i < kAToI(vcCount, 10); i++)
 			{
 				if (kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, 
@@ -530,6 +529,19 @@ static void kCreateTestTask(const char* pcParameterBuffer)
 			}
 
 			kPrintf("Task2 %d Created\n", i);
+			break;
+
+		case 3:
+		default:
+			for (i = 0; i < kAToI(vcCount, 10); i++)
+			{
+				if (kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, 
+							(QWORD)kTestTask3, TASK_LOADBALANCINGID) == NULL)
+					break;
+
+				kSchedule();
+			}
+			kPrintf("Task3 %d Created\n", i);
 			break;
 	}
 }
@@ -2282,9 +2294,9 @@ static void kChangeTaskAffinity(const char* pcParameterBuffer)
 		qwID = kAToI(vcID, 10);
 
 	if (kMemCmp(vcAffinity, "0x", 2) == 0)
-		bAffinity = kAToI(vcID + 2, 16);
+		bAffinity = kAToI(vcAffinity + 2, 16);
 	else
-		bAffinity = kAToI(vcID, 10);
+		bAffinity = kAToI(vcAffinity, 10);
 
 	kPrintf("Change Task Affinity ID [0x%q] Affinity [0x%x] ", qwID, bAffinity);
 	if (kChangeProcessorAffinity(qwID, bAffinity) == TRUE)
