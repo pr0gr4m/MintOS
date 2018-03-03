@@ -12,6 +12,7 @@ TOTALSECTORCOUNT:	dw 0x02		; size of Mint64 OS excluding boot loader
 
 KERNEL32SECTORCOUNT:	dw 0x02
 BOOTSTRAPPROCESSOR:		db 0x01	; check BSP and AP
+STARTGRAPHICMODE:		db 0x01	; graphic mode
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Code Section
@@ -118,6 +119,37 @@ READEND:
 	call PRINTMESSAGE
 	add sp, 6
 
+	; call VBE Service
+	mov ax, 0x4F01
+	mov cx, 0x117			; 1024x768 16bit(5:6:5) mode info
+	mov bx, 0x07E0
+	mov es, bx
+	mov di, 0x00
+	int 0x10
+	cmp ax, 0x004F
+	jne VBEERROR
+
+	; change to graphic mode
+	cmp byte [ STARTGRAPHICMODE ], 0x00
+	je JUMPTOPROTECTEDMODE
+	
+	mov ax, 0x4F02
+	mov bx, 0x4117			; 1024x768 16bit(5:6:5) linear frame buffer mode
+	int 0x10
+	cmp ax, 0x004F
+	jne VBEERROR
+
+	jmp JUMPTOPROTECTEDMODE
+
+VBEERROR:
+	push CHANGEGRAPHICMODEFAIL
+	push 2
+	push 0
+	call PRINTMESSAGE
+	add sp, 6
+	jmp $
+
+JUMPTOPROTECTEDMODE:
 	; execute OS image
 	jmp 0x1000:0x0000
 
@@ -184,6 +216,7 @@ MESSAGE1:	db 'MINT64 OS Boot Loader Start', 0		; message to print
 DISKERRORMESSAGE:	db 'DISK Error!!', 0
 IMAGELOADINGMESSAGE:	db 'OS Image Loading...', 0
 LOADINGCOMPLETEMESSAGE:	db 'Complete!', 0
+CHANGEGRAPHICMODEFAIL:	db 'Change Graphic Mode Fail!', 0
 
 SECTORNUMBER:			db 0x02
 HEADNUMBER:				db 0x00
