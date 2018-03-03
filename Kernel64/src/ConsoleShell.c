@@ -106,9 +106,7 @@ void kStartConsoleShell(void)
 			kMemSet(vcCommandBuffer, '\0', CONSOLESHELL_MAXCOMMANDBUFFERCOUNT);
 			iCommandBufferIndex = 0;
 		}
-		else if ((bKey == KEY_LSHIFT) || (bKey == KEY_RSHIFT) ||
-				(bKey == KEY_CAPSLOCK) || (bKey == KEY_NUMLOCK) ||
-				(bKey == KEY_SCROLLLOCK))
+		else if ((bKey >= KEY_CTRL && bKey <= KEY_F12) || (bKey == KEY_ESC))
 		{
 			// Nothing
 		}
