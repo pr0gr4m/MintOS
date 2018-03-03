@@ -13,7 +13,7 @@ extern volatile QWORD g_qwTickCount;
 void kMemSet(void* pvDestination, BYTE bData, int iSize);
 int kMemCpy(void* pvDestination, const void* pvSource, int iSize);
 int kMemCmp(const void* pvDestination, const void* pvSource, int iSize);
-extern inline void kMemSetWord(void* pvDestination, WORD wData, int iWordSize);
+void kMemSetWord(void* pvDestination, WORD wData, int iWordSize);
 
 BOOL kSetInterruptFlag(BOOL bEnableInterrupt);
 int kStrLen(const char* pcBuffer);
