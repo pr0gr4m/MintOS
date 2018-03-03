@@ -31,4 +31,6 @@ int kVSPrintf(char* pcBuffer, const char* pcFormatString, va_list ap);
 QWORD kGetTickCount(void);
 void kSleep(QWORD qwMillisecond);
 
+QWORD kRandom(void);
+
 #endif

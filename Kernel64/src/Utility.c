@@ -405,3 +405,11 @@ void kSleep(QWORD qwMillisecond)
 		kSchedule();
 	}
 }
+
+static volatile QWORD gs_qwRandomValue = 0;
+
+QWORD kRandom(void)
+{
+	gs_qwRandomValue = (gs_qwRandomValue * 412153 + 5571031) >> 16;
+	return gs_qwRandomValue;
+}

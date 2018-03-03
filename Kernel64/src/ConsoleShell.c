@@ -822,14 +822,6 @@ static void kTestThread(const char* pcParameterBuffer)
 	}
 }
 
-static volatile QWORD gs_qwRandomValue = 0;
-
-QWORD kRandom(void)
-{
-	gs_qwRandomValue = (gs_qwRandomValue * 412153 + 5571031) >> 16;
-	return gs_qwRandomValue;
-}
-
 static void kDropCharacterThread(void)
 {
 	int iX, iY;

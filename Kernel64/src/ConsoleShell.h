@@ -30,7 +30,6 @@ void kStartConsoleShell(void);
 void kExecuteCommand(const char* pcCommandBuffer);
 void kInitializeParameter(PARAMETERLIST* pstList, const char* pcParameter);
 int kGetNextParameter(PARAMETERLIST* pstList, char* pcParameter);
-QWORD kRandom(void);
 
 static void kHelp(const char* pcParameterBuffer);
 static void kCls(const char* pcParameterBuffer);

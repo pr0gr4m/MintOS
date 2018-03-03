@@ -16,9 +16,10 @@
 #include "LocalAPIC.h"
 #include "VBE.h"
 #include "ConsoleShell.h"
+#include "2DGraphics.h"
+#include "GraphicMode.h"
 
 void MainForApplicationProcessor(void);
-void kStartGraphicModeTest();
 
 void Main(void)
 {
@@ -155,35 +156,3 @@ void MainForApplicationProcessor(void)
 	kIdleTask();
 }
 
-void kStartGraphicModeTest()
-{
-	VBEMODEINFOBLOCK* pstVBEMode;
-	WORD* pwFrameBufferAddress;
-	WORD wColor = 0;
-	int iBandHeight;
-	int i, j;
-
-	kGetCh();
-
-	pstVBEMode = kGetVBEModeInfoBlock();
-	pwFrameBufferAddress = (WORD*)((QWORD)pstVBEMode->dwPhysicalBasePointer);
-	
-	iBandHeight = pstVBEMode->wYResolution / 32;
-
-	while (1)
-	{
-		for (j = 0; j < pstVBEMode->wYResolution; j++)
-		{
-			for (i = 0; i < pstVBEMode->wXResolution; i++)
-			{
-				pwFrameBufferAddress[(j * pstVBEMode->wXResolution) + i] =
-					wColor;
-			}
-
-			if ((j % iBandHeight) == 0)
-				wColor = kRandom() % 0xFFFF;
-		}
-
-		kGetCh();
-	}
-}
