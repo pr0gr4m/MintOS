@@ -69,6 +69,6 @@ typedef struct kVBEInfoBlockStruct
 #pragma pack(pop)
 
 
-VBEMODEINFOBLOCK* kGetVBEModeInfoBlock(void);
+extern inline VBEMODEINFOBLOCK* kGetVBEModeInfoBlock(void);
 
 #endif

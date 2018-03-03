@@ -6,12 +6,15 @@
 
 #define MIN(x, y)		(((x) < (y)) ? (x) : (y))
 #define MAX(x, y)		(((x) > (y)) ? (x) : (y))
+#define ABS(x)			(((x) >= 0) ? (x) : -(x))
 
 extern volatile QWORD g_qwTickCount;
 
 void kMemSet(void* pvDestination, BYTE bData, int iSize);
 int kMemCpy(void* pvDestination, const void* pvSource, int iSize);
 int kMemCmp(const void* pvDestination, const void* pvSource, int iSize);
+extern inline void kMemSetWord(void* pvDestination, WORD wData, int iWordSize);
+
 BOOL kSetInterruptFlag(BOOL bEnableInterrupt);
 int kStrLen(const char* pcBuffer);
 void kCheckTotalRAMSize(void);
