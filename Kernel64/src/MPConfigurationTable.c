@@ -202,7 +202,7 @@ void kPrintMPConfigurationTable(void)
 		kPrintf("(Use Default Configuration)\n");
 
 	kPrintf("Feature Byte 2 : 0x%X ", pstMPFloatingPointer->vbMPFeatureByte[1]);
-	if (pstMPFloatingPointer->vbMPFeatureByte[2] &
+	if (pstMPFloatingPointer->vbMPFeatureByte[1] &
 			MP_FLOATINGPOINTER_FEATUREBYTE2_PICMODE)
 		kPrintf("(PIC Mode Support)\n");
 	else
