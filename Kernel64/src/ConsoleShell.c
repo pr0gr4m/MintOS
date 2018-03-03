@@ -16,6 +16,7 @@
 #include "MultiProcessor.h"
 #include "LocalAPIC.h"
 #include "InterruptHandler.h"
+#include "VBE.h"
 
 SHELLCOMMANDENTRY gs_vstCommandTable[] =
 {
@@ -67,6 +68,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
 	{ "starttaskloadbal", "Start Task Load Balancing", kStartTaskLoadBalancing },
 	{ "changeaffinity", "Change Task Affinity, ex) changeaffinity 1(ID) 0xFF(Affinity)",
 		kChangeTaskAffinity },
+	{ "vbemodeinfo", "Show VBE Mode Information", kShowVBEModeInfo },
 };
 
 // main loop of shell
@@ -2304,3 +2306,30 @@ static void kChangeTaskAffinity(const char* pcParameterBuffer)
 	else
 		kPrintf("Fail\n");
 }
+
+static void kShowVBEModeInfo(const char* pcParameterBuffer)
+{
+	VBEMODEINFOBLOCK* pstModeInfo;
+
+	pstModeInfo = kGetVBEModeInfoBlock();
+	kPrintf("VESA %x\n", pstModeInfo->wWinGranulity);
+	kPrintf("X Resolution: %d\n", pstModeInfo->wXResolution);
+	kPrintf("Y Resolution: %d\n", pstModeInfo->wYResolution);
+	kPrintf("Bits Per Pixel: %d\n", pstModeInfo->bBitsPerPixel);
+
+	kPrintf("Red Mask Size: %d, Field Position: %d\n", pstModeInfo->bRedMaskSize,
+			pstModeInfo->bRedFieldPosition);
+	kPrintf("Green Mask Size: %d, Field Position: %d\n", pstModeInfo->bGreenMaskSize,
+			pstModeInfo->bGreenFieldPosition);
+	kPrintf("Blue Mask Size: %d, Field Position: %d\n", pstModeInfo->bBlueMaskSize,
+			pstModeInfo->bBlueFieldPosition);
+	kPrintf("Physical Base Pointer: 0x%X\n", pstModeInfo->dwPhysicalBasePointer);
+
+	kPrintf("Linear Red Mask Size: %d, Field Position: %d\n",
+			pstModeInfo->bLinearRedMaskSize, pstModeInfo->bLinearRedFieldPosition);
+	kPrintf("Linear Green Mask Size: %d, Field Position: %d\n",
+			pstModeInfo->bLinearGreenMaskSize, pstModeInfo->bLinearGreenFieldPosition);
+	kPrintf("Linear Blue Mask Size: %d, Field Position: %d\n",
+			pstModeInfo->bLinearBlueMaskSize, pstModeInfo->bLinearBlueFieldPosition);
+}
+
