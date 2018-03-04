@@ -193,7 +193,7 @@ void kInternalDrawRect(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 		iWidth = kGetRectangleWidth(&stOverlappedArea);
 		iMemoryAreaWidth = kGetRectangleWidth(pstMemoryArea);
 
-		pstVideoMemoryAddress += stOverlappedArea.iY1 * iMemoryAreaWidth +
+		pstMemoryAddress += stOverlappedArea.iY1 * iMemoryAreaWidth +
 			stOverlappedArea.iX1;
 
 		for (iY = stOverlappedArea.iY1; iY < stOverlappedArea.iY2; iY++)
@@ -289,7 +289,7 @@ void kInternalDrawText(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 	int i, j, k;
 	BYTE bBitmap;
 	BYTE bCurrentBitmask;
-	int iBitmaskStartIndex;
+	int iBitmapStartIndex;
 	int iMemoryAreaWidth;
 	RECT stFontArea;
 	RECT stOverlappedArea;
@@ -328,7 +328,7 @@ void kInternalDrawText(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 		for (j = iStartYOffset; j < iOverlappedHeight; j++)
 		{
 			bBitmap = g_vucEnglishFont[iBitmapStartIndex++];
-			bCurrentBitmak = 0x01 << (FONT_ENGLISHWIDTH - 1 - iStartXOffset);
+			bCurrentBitmask = 0x01 << (FONT_ENGLISHWIDTH - 1 - iStartXOffset);
 
 			for (i = iStartXOffset; i < iOverlappedWidth; i++)
 			{

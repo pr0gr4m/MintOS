@@ -26,13 +26,13 @@ typedef struct kPointStruct
 
 void kInternalDrawPixel(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 		int iX, int iY, COLOR stColor);
-void kInternalDrawLine(const RECT* pstMemoryArea, COLIR* pstMemoryAddress,
+void kInternalDrawLine(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 		int iX1, int iY1, int iX2, int iY2, COLOR stColor);
-void kInternalDrawRect(const RECT* pstMemoryArea, COLIR* pstMemoryAddress,
+void kInternalDrawRect(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 		int iX1, int iY1, int iX2, int iY2, COLOR stColor, BOOL bFill);
-void kInternalDrawCircle(const RECT* pstMemoryArea, COLIR* pstMemoryAddress,
+void kInternalDrawCircle(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 		int iX, int iY, int iRadius, COLOR stColor, BOOL bFill);
-void kInternalDrawText(const RECT* pstMemoryArea, COLIR* pstMemoryAddress,
+void kInternalDrawText(const RECT* pstMemoryArea, COLOR* pstMemoryAddress,
 		int iX, int iY, COLOR stTextColor, COLOR stBackgroundColor,
 		const char* pcString, int iLength);
 
