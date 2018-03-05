@@ -2,6 +2,7 @@
 #include "Keyboard.h"
 #include "Queue.h"
 #include "AssemblyUtility.h"
+#include "Utility.h"
 
 static MOUSEMANAGER gs_stMouseManager = { 0, };
 
@@ -15,7 +16,7 @@ BOOL kInitializeMouse(void)
 
 	kInitializeSpinLock(&(gs_stMouseManager.stSpinLock));
 
-	kf (kActivateMouse() == TRUE)
+	if (kActivateMouse() == TRUE)
 	{
 		kEnableMouseInterrupt();
 		return TRUE;

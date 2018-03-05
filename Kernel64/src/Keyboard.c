@@ -3,6 +3,7 @@
 #include "Utility.h"
 #include "Keyboard.h"
 #include "Queue.h"
+#include "Mouse.h"
 
 /*
  * Functions about keyboard controller
@@ -33,14 +34,16 @@ BOOL kWaitForACKAndPutOtherScanCode(void)
 	int i, j;
 	BYTE bData;
 	BOOL bResult = FALSE;
+	BOOL bMouseData;
 
 	for (i = 0; i < 100; i++)
 	{
-		for (j = 0; j < 0xFFFF; j++)
-		{
-			if (kIsOutputBufferFull() == TRUE)
-				break;
-		}
+		while (kWaitForOutputBufferFull() == FALSE);
+
+		if (kIsMouseDataInOutputBuffer() == TRUE)
+			bMouseData = TRUE;
+		else
+			bMouseData = FALSE;
 
 		bData = kInPortByte(0x60);
 		if (bData == 0xFA)
@@ -50,7 +53,10 @@ BOOL kWaitForACKAndPutOtherScanCode(void)
 		}
 		else
 		{
-			kConvertScanCodeAndPutQueue(bData);
+			if (bMouseData == FALSE)
+				kConvertScanCodeAndPutQueue(bData);
+			else
+				kAccumulateMouseDataAndPutQueue(bData);
 		}
 	}
 	return bResult;
