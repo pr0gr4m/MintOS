@@ -4,6 +4,8 @@
 #include "Utility.h"
 #include "LocalAPIC.h"
 #include "PIT.h"
+#include "PIC.h"
+#include "InterruptHandler.h"
 
 volatile int g_iWakeUpApplicationProcessorCount = 0;
 volatile QWORD g_qwAPICIDAddress = 0;
@@ -103,4 +105,34 @@ BYTE kGetAPICID(void)
 	return *((DWORD*)g_qwAPICIDAddress) >> 24;
 }
 
+BOOL kChangeToMultiCoreMode(void)
+{
+	MPCONFIGURATIONMANAGER* pstMPManager;
+	BOOL bInterruptFlag;
+	int i;
 
+	if (kStartUpApplicationProcessor() == FALSE)
+		return FALSE;
+
+	pstMPManager = kGetMPConfigurationManager();
+	if (pstMPManager->bUsePICMode == TRUE)
+	{
+		kOutPortByte(0x22, 0x70);
+		kOutPortByte(0x23, 0x01);
+	}
+
+	kMaskPICInterrupt(0xFFFF);
+	kEnableGlobalLocalAPIC();
+
+	kEnableSoftwareLocalAPIC();
+	bInterruptFlag = kSetInterruptFlag(FALSE);
+	kSetTaskPriority(0);
+	kInitializeLocalVectorTable();
+	kSetSymmetricIOMode(TRUE);
+	kInitializeIORedirectionTable();
+	kSetInterruptFlag(bInterruptFlag);
+	kSetInterruptLoadBalancing(TRUE);
+	for (i = 0; i < MAXPROCESSORCOUNT; i++)
+		kSetTaskLoadBalancing(i, TRUE);
+	return TRUE;
+}

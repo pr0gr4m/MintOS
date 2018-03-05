@@ -18,12 +18,16 @@
 #include "ConsoleShell.h"
 #include "2DGraphics.h"
 #include "GraphicMode.h"
+#include "MPConfigurationTable.h"
+#include "Mouse.h"
 
 void MainForApplicationProcessor(void);
 
 void Main(void)
 {
 	int iCursorX, iCursorY;
+	BYTE bButton;
+	int iX, iY;
 
 	if (*((BYTE*)BOOTSTRAPPROCESSOR_FLAGADDRESS) == 0)
 		MainForApplicationProcessor();
@@ -83,6 +87,22 @@ void Main(void)
 		while (1);
 	}
 
+	
+	kPrintf("Mouse Activate And Queue Initialize........................[    ]");
+
+	if (kInitializeMouse() == TRUE)
+	{
+		kEnableMouseInterrupt();
+		kSetCursor(45, iCursorY++);
+		kPrintf("PASS\n");
+	}
+	else
+	{
+		kSetCursor(45, iCursorY++);
+		kPrintf("FAIL\n");
+		while (1);
+	}
+
 	kPrintf("PIC Controller And Interrupt Initialize....................[    ]");
 	kInitializePIC();
 	kMaskPICInterrupt(0);
@@ -117,6 +137,18 @@ void Main(void)
 	kInitializeSerialPort();
 	kSetCursor(60, iCursorY++);
 	kPrintf("PASS\n");
+
+	kPrintf("Change To Multicore Processor Mode.........................[    ]");
+	if (kChangeToMultiCoreMode() == TRUE)
+	{
+		kSetCursor(45, iCursorY++);
+		kPrintf("PASS\n");
+	}
+	else
+	{
+		kSetCursor(45, iCursorY++);
+		kPrintf("FAIL\n");
+	}
 
 	kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM | TASK_FLAGS_IDLE, 0, 0,
 			(QWORD)kIdleTask, kGetAPICID());

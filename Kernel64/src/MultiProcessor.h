@@ -9,5 +9,6 @@
 BOOL kStartUpApplicationProcessor(void);
 BYTE kGetAPICID(void);
 static BOOL kWakeUpApplicationProcessor(void);
+BOOL kChangeToMultiCoreMode(void);
 
 #endif
