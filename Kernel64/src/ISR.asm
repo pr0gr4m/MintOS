@@ -4,7 +4,7 @@ SECTION .text
 
 
 extern kCommonExceptionHandler, kCommonInterruptHandler, kKeyboardHandler
-extern kTimerHandler, kDeviceNotAvailableHandler, kHDDHandler
+extern kTimerHandler, kDeviceNotAvailableHandler, kHDDHandler, kMouseHandler
 
 
 global kISRDivideError, kISRDebug, kISRNMI, kISRBreakPoint, kISROverflow
@@ -472,9 +472,8 @@ kISRNotUsed2:
 kISRMouse:
 	KSAVECONTEXT
 
-
 	mov rdi, 44
-	call kCommonInterruptHandler
+	call kMouseHandler
 
 	KLOADCONTEXT
 	iretq
