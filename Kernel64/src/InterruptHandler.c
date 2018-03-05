@@ -9,6 +9,7 @@
 #include "HardDisk.h"
 #include "LocalAPIC.h"
 #include "MPConfigurationTable.h"
+#include "Mouse.h"
 
 static INTERRUPTMANAGER gs_stInterruptManager;
 
@@ -139,8 +140,17 @@ void kKeyboardHandler(int iVectorNumber)
 
 	if (kIsOutputBufferFull() == TRUE)
 	{
-		bTemp = kGetKeyboardScanCode();
-		kConvertScanCodeAndPutQueue(bTemp);
+		if (kIsMouseDataInOutputBuffer() == FALSE)
+		{
+			bTemp = kGetKeyboardScanCode();
+			kConvertScanCodeAndPutQueue(bTemp);
+		}
+		else
+		{
+			// kGetKeyboardScanCode also can use to read mouse data
+			bTemp = kGetKeyboardScanCode();
+			kAccumulateMouseDataAndPutQueue(bTemp);
+		}
 	}
 
 	iIRQ = iVectorNumber - PIC_IRQSTARTVECTOR;
@@ -254,6 +264,40 @@ void kHDDHandler(int iVectorNumber)
 		kSetHDDInterruptFlag(FALSE, FALSE);
 	}
 
+	kSendEOI(iIRQ);
+	kIncreaseInterruptCount(iIRQ);
+	kProcessLoadBalancing(iIRQ);
+}
+
+void kMouseHandler(int iVectorNumber)
+{
+	char vcBuffer[] = "[INT:  , ]";
+	static int g_iMouseInterruptCount = 0;
+	BYTE bTemp;
+	int iIRQ;
+
+	vcBuffer[5] = '0' + iVectorNumber / 10;
+	vcBuffer[6] = '0' + iVectorNumber % 10;
+	vcBuffer[8] = '0' + g_iMouseInterruptCount;
+	g_iMouseInterruptCount = (g_iMouseInterruptCount + 1) % 10;
+	kPrintStringXY(0, 0, vcBuffer);
+
+	if (kIsOutputBufferFull() == TRUE)
+	{
+		if (kIsMouseDataInOutputBuffer() == FALSE)
+		{
+			// keyboard scan code can appear
+			bTemp = kGetKeyboardScanCode();
+			kConvertScanCodeAndPutQueue(bTemp);
+		}
+		else
+		{
+			bTemp = kGetKeyboardScanCode();
+			kAccumulateMouseDataAndPutQueue(bTemp);
+		}
+	}
+
+	iIRQ = iVectorNumber - PIC_IRQSTARTVECTOR;
 	kSendEOI(iIRQ);
 	kIncreaseInterruptCount(iIRQ);
 	kProcessLoadBalancing(iIRQ);
