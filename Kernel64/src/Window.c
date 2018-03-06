@@ -2,7 +2,6 @@
 #include "Utility.h"
 #include "Console.h"
 #include "VBE.h"
-#include "Mouse.h"
 #include "Font.h"
 #include "Task.h"
 #include "DynamicMemory.h"
@@ -804,70 +803,4 @@ COLOR kGetRandomColor(void)
 	iB = ABS(kRandom()) % 256;
 	return RGB(iR, iG, iB);
 }
-
-void kStartGraphicModeTest()
-{
-	VBEMODEINFOBLOCK* pstVBEMode;
-	int iX, iY;
-	COLOR* pstVideoMemory;
-	RECT stScreenArea;
-	int iRelativeX, iRelativeY;
-	BYTE bButton;
-
-	pstVBEMode = kGetVBEModeInfoBlock();
-
-	stScreenArea.iX1 = 0;
-	stScreenArea.iY1 = 0;
-	stScreenArea.iX2 = pstVBEMode->wXResolution - 1;
-	stScreenArea.iY2 = pstVBEMode->wYResolution - 1;
-
-	pstVideoMemory = (COLOR*)((QWORD)pstVBEMode->dwPhysicalBasePointer &
-			0xFFFFFFFF);
-
-	iX = pstVBEMode->wXResolution / 2;
-	iY = pstVBEMode->wYResolution / 2;
-
-	kInternalDrawRect(&stScreenArea, pstVideoMemory,
-			stScreenArea.iX1, stScreenArea.iY1, stScreenArea.iX2, stScreenArea.iY2,
-			RGB(232, 255, 232), TRUE);
-
-	kDrawCursor(&stScreenArea, pstVideoMemory, iX, iY);
-
-	while (1)
-	{
-		if (kGetMouseDataFromMouseQueue(&bButton, &iRelativeX, &iRelativeY) ==
-				FALSE)
-		{
-			kSleep(1);
-			continue;
-		}
-
-		kInternalDrawRect(&stScreenArea, pstVideoMemory, iX, iY,
-				iX + MOUSE_CURSOR_WIDTH, iY + MOUSE_CURSOR_HEIGHT,
-				RGB(232, 255, 232), TRUE);
-
-		iX += iRelativeX;
-		iY += iRelativeY;
-
-		if (iX < stScreenArea.iX1)
-			iX = stScreenArea.iX1;
-		else if (iX > stScreenArea.iX2)
-			iX = stScreenArea.iX2;
-
-		if (iY < stScreenArea.iY1)
-			iY = stScreenArea.iY1;
-		else if (iY > stScreenArea.iY2)
-			iY = stScreenArea.iY2;
-
-		if (bButton & MOUSE_LBUTTONDOWN)
-			kDrawWindowFrame(iX - 10, iY - 10, 400, 200, "MINT64 OS Test Window");
-		else if (bButton & MOUSE_RBUTTONDOWN)
-			kInternalDrawRect(&stScreenArea, pstVideoMemory, 
-					stScreenArea.iX1, stScreenArea.iY1, stScreenArea.iX2, stScreenArea.iY2,
-					RGB(232, 255, 232), TRUE);
-
-		kDrawCursor(&stScreenArea, pstVideoMemory, iX, iY);
-	}
-}
-
 

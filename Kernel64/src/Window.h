@@ -121,7 +121,6 @@ static void kDrawCursor(int iX, int iY);
 void kMoveCursor(int iX, int iY);
 void kGetCursorPosition(int* piX, int* piY);
 
-void kStartGraphicModeTest();
 void kGetRandomXY(int* piX, int* piY);
 COLOR kGetRandomColor(void);
 
