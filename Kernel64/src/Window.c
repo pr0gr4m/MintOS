@@ -428,9 +428,8 @@ BOOL kDrawWindowBackground(QWORD qwWindowID)
 	else
 		iX = 0;
 
-	// issue
 	kInternalDrawRect(&stArea, pstWindow->pstWindowBuffer,
-			iX, iY, iWidth - 1 - iX, iHeight - 1 - iY, 
+			iX, iY, iWidth - 1 - iX, iHeight - 1 - iX, 
 			WINDOW_COLOR_BACKGROUND, TRUE);
 
 	kUnlock(&(pstWindow->stLock));
