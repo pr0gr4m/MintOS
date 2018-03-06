@@ -4,12 +4,14 @@
 #include "VBE.h"
 #include "Mouse.h"
 #include "Task.h"
+#include "MultiProcessor.h"
+#include "Utility.h"
 
 void kStartWindowManager(void)
 {
 	VBEMODEINFOBLOCK* pstVBEMode;
 	int iRelativeX, iRelativeY;
-	in tiMouseX, iMouseY;
+	int iMouseX, iMouseY;
 	BYTE bButton;
 	QWORD qwWindowID;
 	TCB* pstTask;
@@ -82,11 +84,12 @@ void kStartGraphicModeTest(void)
 	iX = pstVBEMode->wXResolution / 2;
 	iY = pstVBEMode->wYResolution / 2;
 
+	/*
 	kInternalDrawRect(&stScreenArea, pstVideoMemory,
 			stScreenArea.iX1, stScreenArea.iY1, stScreenArea.iX2, stScreenArea.iY2,
 			RGB(232, 255, 232), TRUE);
 
-	kDrawCursor(&stScreenArea, pstVideoMemory, iX, iY);
+	kDrawCursor(iX, iY);
 
 	while (1)
 	{
@@ -121,8 +124,9 @@ void kStartGraphicModeTest(void)
 					stScreenArea.iX1, stScreenArea.iY1, stScreenArea.iX2, stScreenArea.iY2,
 					RGB(232, 255, 232), TRUE);
 
-		kDrawCursor(&stScreenArea, pstVideoMemory, iX, iY);
+		kDrawCursor(iX, iY);
 	}
+	*/
 }
 
 

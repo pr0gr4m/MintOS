@@ -17,9 +17,9 @@
 #include "VBE.h"
 #include "ConsoleShell.h"
 #include "2DGraphics.h"
-#include "GraphicMode.h"
-#include "MPConfigurationTable.h"
 #include "Mouse.h"
+#include "MPConfigurationTable.h"
+#include "WindowManagerTask.h"
 
 void MainForApplicationProcessor(void);
 
@@ -156,7 +156,7 @@ void Main(void)
 	if (*(BYTE*)VBE_STARTGRAPHICMODEFLAGADDRESS == 0)	
 		kStartConsoleShell();
 	else
-		kStartGraphicModeTest();
+		kStartWindowManager();
 }
 
 void MainForApplicationProcessor(void)

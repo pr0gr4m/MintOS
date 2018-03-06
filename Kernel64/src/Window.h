@@ -113,9 +113,9 @@ BOOL kDrawPixel(QWORD qwWindowID, int iX, int iY, COLOR stColor);
 BOOL kDrawLine(QWORD qwWindowID, int iX1, int iY1, int iX2, int iY2, COLOR stColor);
 BOOL kDrawRect(QWORD qwWindowID, int iX1, int iY1, int iX2, int iY2,
 		COLOR stColor, BOOL bFill);
-void kDrawCircle(QWORD qwWindowID, int iX, int iY, int iRadius, COLOR stColor,
+BOOL kDrawCircle(QWORD qwWindowID, int iX, int iY, int iRadius, COLOR stColor,
 		BOOL bFill);
-void kDrawText(QWORD qwWindowID, int iX, int iY, COLOR stTextColor, 
+BOOL kDrawText(QWORD qwWindowID, int iX, int iY, COLOR stTextColor, 
 		COLOR stBackgroundColor, const char* pcString, int iLength);
 static void kDrawCursor(int iX, int iY);
 void kMoveCursor(int iX, int iY);

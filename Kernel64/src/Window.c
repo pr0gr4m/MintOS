@@ -5,6 +5,7 @@
 #include "Font.h"
 #include "Task.h"
 #include "DynamicMemory.h"
+#include "MultiProcessor.h"
 
 static WINDOWPOOLMANAGER gs_stWindowPoolManager;
 static WINDOWMANAGER gs_stWindowManager;
@@ -120,7 +121,7 @@ WINDOWMANAGER* kGetWindowManager(void)
 
 QWORD kGetBackgroundWindowID(void)
 {
-	return &gs_stWindowManager.qwBackgroundWindowID;
+	return gs_stWindowManager.qwBackgroundWindowID;
 }
 
 void kGetScreenArea(RECT* pstScreenArea)
@@ -572,8 +573,8 @@ BOOL kDrawButton(QWORD qwWindowID, RECT* pstButtonArea, COLOR stBackgroundColor,
 			pstButtonArea->iY2 - 1, WINDOW_COLOR_BUTTONBRIGHT);
 
 	kInternalDrawLine(&stArea, pstWindow->pstWindowBuffer,
-			pstButtonArea->iX1 + 1, pstButtonArea->iYr2, pstButtonArea->iX2,
-			pstButtonArea->iYr2, WINDOW_COLOR_BUTTONDARK);
+			pstButtonArea->iX1 + 1, pstButtonArea->iY2, pstButtonArea->iX2,
+			pstButtonArea->iY2, WINDOW_COLOR_BUTTONDARK);
 	kInternalDrawLine(&stArea, pstWindow->pstWindowBuffer,
 			pstButtonArea->iX1 + 2, pstButtonArea->iY1 - 1, pstButtonArea->iX2,
 			pstButtonArea->iY2 - 1, WINDOW_COLOR_BUTTONDARK);
@@ -728,6 +729,7 @@ BOOL kDrawLine(QWORD qwWindowID, int iX1, int iY1, int iX2, int iY2, COLOR stCol
 	kUnlock(&pstWindow->stLock);
 	return TRUE;
 }
+
 BOOL kDrawRect(QWORD qwWindowID, int iX1, int iY1, int iX2, int iY2,
 		COLOR stColor, BOOL bFill)
 {
@@ -748,7 +750,7 @@ BOOL kDrawRect(QWORD qwWindowID, int iX1, int iY1, int iX2, int iY2,
 	return TRUE;
 }
 
-void kDrawCircle(QWORD qwWindowID, int iX, int iY, int iRadius, COLOR stColor,
+BOOL kDrawCircle(QWORD qwWindowID, int iX, int iY, int iRadius, COLOR stColor,
 		BOOL bFill)
 {
 	WINDOW* pstWindow;
@@ -768,7 +770,7 @@ void kDrawCircle(QWORD qwWindowID, int iX, int iY, int iRadius, COLOR stColor,
 	return TRUE;
 }
 
-void kDrawText(QWORD qwWindowID, int iX, int iY, COLOR stTextColor, 
+BOOL kDrawText(QWORD qwWindowID, int iX, int iY, COLOR stTextColor, 
 		COLOR stBackgroundColor, const char* pcString, int iLength)
 {
 	WINDOW* pstWindow;
