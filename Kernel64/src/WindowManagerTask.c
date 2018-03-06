@@ -42,7 +42,7 @@ void kStartWindowManager(void)
 		if (bButton & MOUSE_LBUTTONDOWN)
 		{
 			// create window
-			//kSPrintf(vcTempTitle, "MINT64 OS Test Window %d", iWindowCount++);
+			kSPrintf(vcTempTitle, "MINT64 OS Test Window %d", iWindowCount++);
 			qwWindowID = kCreateWindow(iMouseX - 10, iMouseY - WINDOW_TITLEBAR_HEIGHT / 2,
 					400, 200, WINDOW_FLAGS_DRAWFRAME | WINDOW_FLAGS_DRAWTITLE, vcTempTitle);
 

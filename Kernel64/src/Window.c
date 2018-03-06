@@ -575,7 +575,7 @@ BOOL kDrawButton(QWORD qwWindowID, RECT* pstButtonArea, COLOR stBackgroundColor,
 			pstButtonArea->iX1 + 1, pstButtonArea->iY2, pstButtonArea->iX2,
 			pstButtonArea->iY2, WINDOW_COLOR_BUTTONDARK);
 	kInternalDrawLine(&stArea, pstWindow->pstWindowBuffer,
-			pstButtonArea->iX1 + 2, pstButtonArea->iY1 - 1, pstButtonArea->iX2,
+			pstButtonArea->iX1 + 2, pstButtonArea->iY2 - 1, pstButtonArea->iX2,
 			pstButtonArea->iY2 - 1, WINDOW_COLOR_BUTTONDARK);
 	kInternalDrawLine(&stArea, pstWindow->pstWindowBuffer,
 			pstButtonArea->iX2, pstButtonArea->iY1 + 1, pstButtonArea->iX2,
