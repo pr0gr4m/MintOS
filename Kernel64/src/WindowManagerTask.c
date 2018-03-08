@@ -9,17 +9,11 @@
 
 void kStartWindowManager(void)
 {
-	VBEMODEINFOBLOCK* pstVBEMode;
-	int iRelativeX, iRelativeY;
 	int iMouseX, iMouseY;
-	BYTE bButton;
-	QWORD qwWindowID;
-	TCB* pstTask;
-	char vcTempTitle[WINDOW_TITLEMAXLENGTH];
-	int iWindowCount = 0;
+	BOOL bMouseDataResult;
+	BOOL bKeyDataResult;
+	BOOL bEventQueueResult;
 
-	pstTask = kGetRunningTask(kGetAPICID());
-	
 	kInitializeGUISystem();
 
 	kGetCursorPosition(&iMouseX, &iMouseY);
@@ -27,38 +21,18 @@ void kStartWindowManager(void)
 
 	while (1)
 	{
-		if (kGetMouseDataFromMouseQueue(&bButton, &iRelativeX, &iRelativeY) ==
-				FALSE)
+		bMouseDataResult = kProcessMouseData();
+		bKeyDataResult = kProcessKeyData();
+		bEventQueueResult = FALSE;
+		while (kProcessEventQueueData() == TRUE)
+			bEventQueueResult = TRUE;
+
+		if ((bMouseDataResult == FALSE) &&
+				(bKeyDataResult == FALSE) &&
+				(bEventQueueResult == FALSE))
 		{
 			kSleep(0);
-			continue;
 		}
-
-		kGetCursorPosition(&iMouseX, &iMouseY);
-
-		iMouseX += iRelativeX;
-		iMouseY += iRelativeY;
-
-		if (bButton & MOUSE_LBUTTONDOWN)
-		{
-			// create window
-			kSPrintf(vcTempTitle, "MINT64 OS Test Window %d", iWindowCount++);
-			qwWindowID = kCreateWindow(iMouseX - 10, iMouseY - WINDOW_TITLEBAR_HEIGHT / 2,
-					400, 200, WINDOW_FLAGS_DRAWFRAME | WINDOW_FLAGS_DRAWTITLE, vcTempTitle);
-
-			kDrawText(qwWindowID, 10, WINDOW_TITLEBAR_HEIGHT + 10, RGB(0, 0, 0),
-					WINDOW_COLOR_BACKGROUND, "This is real window~!!", 22);
-			kDrawText(qwWindowID, 10, WINDOW_TITLEBAR_HEIGHT + 30, RGB(0, 0, 0),
-					WINDOW_COLOR_BACKGROUND, "No more prototype~!!", 18);
-			kShowWindow(qwWindowID, TRUE);
-		}
-		else if (bButton & MOUSE_RBUTTONDOWN)
-		{
-			kDeleteAllWindowInTaskID(pstTask->stLink.qwID);
-			iWindowCount = 0;
-		}
-
-		kMoveCursor(iMouseX, iMouseY);
 	}
 }
 
@@ -130,3 +104,204 @@ void kStartGraphicModeTest(void)
 }
 
 
+BOOL kProcessMouseData(void)
+{
+	QWORD qwWindowIDUnderMouse;
+	BYTE bButtonStatus;
+	int iRelatvieX, iRelativeY;
+	int iMouseX, iMouseY;
+	int iPreviousMouseX, iPreviousMouseY;
+	BYTE bChangedButton;
+	RECT stWindowArea;
+	EVENT stEvent;
+	WINDOWMANAGER* pstWindowManager;
+	char vcTempTitle[WINDOW_TITLEMAXLENGTH + 1];
+	static int iWindowCount = 0;
+	QWORD qwWindowID;
+
+	if (kGetMouseDataFromMouseQueue(&bButtonStatus, &iRelatvieX, &iRelativeY) ==
+			FALSE)
+		return FALSE;
+
+	pstWindowManager = kGetWindowManager();
+	kGetCursorPosition(&iMouseX, &iMouseY);
+
+	iPreviousMouseX = iMouseX;
+	iPreviousMouseY = iMouseY;
+
+	iMouseX += iRelativeX;
+	iMouseY += iRelativeY;
+
+	kMoveCursor(iMouseX, iMouseY);
+	kGetCursorPosition(&iMouseX, &iMouseY);
+
+	qwWindowIDUnderMouse = kFindWindowByPoint(iMouseX, iMouseY);
+
+	bChangedButton = pstWindowManager->bPreviousButton ^ bButtonStatus;
+
+	if (bChangedButton & MOUSE_LBUTTONDOWN)
+	{
+		if (bButtonStatus & MOUSE_LBUTTONDOWN)
+		{
+			if (qwWindowIDUnderMouse != pstWindowManager->qwBackgroundWindowID)
+				kMoveWindowToTop(qwWIndowIDUnderMouse);
+
+			if (kIsInTitleBar(qwWindowIDUnderMouse, iMouseX, iMouseY) == TRUE)
+			{
+				if (kIsInCloseButton(qwWindowIDUnderMouse, iMouseX, iMouseY)
+						== TRUE)
+				{
+					kSetWindowEvent(qwWindowIDUnderMouse, EVENT_WINDOW_CLOSE,
+							&stEvent);
+					kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+
+					// Test
+					kDeleteWindow(qwWindowIDUnderMouse);
+				}
+				else
+				{
+					pstWindowManager->bWindowMoveMode = TRUE;
+					pstWindowManager->qwMovingWindowID = qwWindowIDUnderMouse;
+				}
+			}
+			else
+			{
+				kSetMouseEvent(qwWindowIDUnderMouse, EVENT_MOUSE_LBUTTONDOWN,
+						iMouseX, iMouseY, bButtonStatus, &stEvent);
+				kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+			}
+		}
+		else	// left button up
+		{
+			if (pstWindowManager->bWindowMoveMode == TRUE)
+			{
+				pstWindowManager->bWindowMoveMode = FALSE;
+				pstWindowManager->qwMovingWindowID = WINDOW_INVALIDID;
+			}
+			else
+			{
+				kSetMouseEvent(qwWindowIDUnderMouse, EVENT_MOUSE_LBUTTONUP,
+						iMouseX, iMouseY, bButtonStatus, &stEvent);
+				kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+			}
+		}
+	}
+	else if (bChangedButton & MOUSE_RBUTTONDOWN)
+	{
+		if (bButtonStatus & MOUSE_RBUTTONDOWN)
+		{
+			kSetMouseEvent(qwWindowIDUnderMouse, EVENT_MOUSE_RBUTTONDOWN,
+					iMouseX, iMouseY, bButtonStatus, &stEvent);
+			kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+
+			// Test 2
+			kSPrintf(vcTempTitle, "MINT64 OS Test Window %d", iWindowCount++);
+			qwWindowID = kCreateWindow(iMouseX - 10, iMouseY - WINDOW_TITLEBAR_HEIGHT / 2,
+					400, 200, WINDOW_FLAGS_DRAWFRAME | WINDOW_FLAGS_DRAWTITLE, vcTemptitle);
+
+			kDrawText(qwWindowID, 10, WINDOW_TITLEBAR_HEIGHT + 10, RGB(0, 0, 0),
+					WINDOW_COLOR_BACKGROUND, "This is real window.", 22);
+			kDrawText(qwWindowID, 10, WINDOW_TITLEBAR_HEIGHT + 30, RGB(0, 0, 0),
+					WINDOW_COLOR_BACKGROUND, "Now you can move and select window.", 37);
+			kShowWindow(qwWindowID, TRUE);
+		}
+		else
+		{
+			kSetMouseEvent(qwWindowIDUnderMouse, EVENT_MOUSE_RBUTTONUP,
+					iMouseX, iMouseY, bButtonStatus, &stEvent);
+			kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+		}
+	}
+	else if (bChangedButton & MOUSE_MBUTTONDOWN)
+	{
+		if (bButtonStatus & MOUSE_MBUTTONDOWN)
+		{
+			kSetMouseEvent(qwWindowIDUnderMouse, EVENT_MOUSE_MBUTTONDOWN,
+					iMouseX, iMouseY, bButtonStatus, &stEvent);
+			kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+		}
+		else
+		{
+			kSetMouseEvent(qwWindowIDUnderMouse, EVENT_MOUSE_MBUTTONUP,
+					iMouseX, iMouseY, bButtonStatus, &stEvent);
+			kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+		}
+	}
+	else
+	{
+		kSetMouseEvent(qwWindowIDUnderMouse, EVENT_MOUSE_MOVE,
+				iMouseX, iMouseY, bButtonStatus, &stEvent);
+		kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
+	}
+
+	if (pstWindowManager->bWindowMoveMode == TRUE)
+	{
+		if (kGetWindowArea(pstWindowManager->qwMovingWindowID, &stWindowArea)
+				== TRUE)
+		{
+			kMoveWindow(pstWindowManager->qwMovingWindowID,
+					stWindowArea.iX1 + iMouseX - iPreviousMouseX,
+					stWindowArea.iY1 + iMouseY - iPreviousMouseY);
+		}
+		else
+		{
+			pstWindowManager->bWindowMoveMode = FALSE;
+			pstWindowManager->qwMovingWindowID = WINDOW_INVALIDID;
+		}
+	}
+
+	pstWindowManager->bPreviousButtonStatus = bButtonStatus;
+	return TRUE;
+}
+
+BOOL kProcessKeyData(void)
+{
+	KEYDATA stKeyData;
+	EVENT stEvent;
+	QWORD qwActiveWindowID;
+
+	if (kGetKeyFromKeyQueue(&stKeyData) == FALSE)
+		return FALSE;
+
+	qwActiveWindowID = kGetTopWindowID();
+	kSetKeyEvent(qwActiveWindowID, &stKeyData, &stEvent);
+	return kSendEventToWindow(qwActiveWindowID, &stEvent);
+}
+
+BOOL kProcessEventQueueData(void)
+{
+	EVENT stEvent;
+	WINDOWEVENT* pstWindowEvent;
+	QWORD qwWindowID;
+	RECT stArea;
+
+	if (kReceiveEventFromWindowManagerQueue(&stEvent) == FALSE)
+		return FALSE;
+
+	pstWindowEvent = &(stEvent.stWindowEvent);
+
+	switch (stEvent.qwType)
+	{
+		case EVENT_WINDOWMANAGER_UPDATESCREENBYID:
+			// update whole window
+			if (kGetWindowArea(pstWindowEvent->qwWindowID, &stArea) == TRUE)
+				kRedrawWindowByArea(&stArea);
+			break;
+
+		case EVENT_WINDOWMANAGER_UPDATESCREENBYWINDOWAREA:
+			// update window inner
+			if (kConvertRectClientToScreen(pstWindowEvent->qwWindowID,
+						&(pstWindowEvent->stArea), &stArea) == TRUE)
+				kRedrawWindowByArea(&stArea);
+			break;
+
+		case EVENT_WINDOWMANAGER_UPDATESCREENBYSCREENAREA:
+			// update screen
+			kRedrawWindowByArea(&(pstWindowEvent->stArea));
+			break;
+
+		default:
+			return FALSE;
+	}
+	return TRUE;
+}
