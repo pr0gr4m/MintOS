@@ -179,7 +179,8 @@ QWORD kCreateWindow(int iX, int iY, int iWidth, int iHeight, DWORD dwFlags,
 		kFreeWindow(pstWindow->stLink.qwID);
 		return WINDOW_INVALIDID;
 	}
-	
+
+	// set window
 	pstWindow->stArea.iX1 = iX;
 	pstWindow->stArea.iY1 = iY;
 	pstWindow->stArea.iX2 = iX + iWidth - 1;
@@ -187,6 +188,10 @@ QWORD kCreateWindow(int iX, int iY, int iWidth, int iHeight, DWORD dwFlags,
 
 	kMemCpy(pstWindow->vcWindowTitle, pcTitle, WINDOW_TITLEMAXLENGTH);
 	pstWindow->vcWindowTitle[WINDOW_TITLEMAXLENGTH] = '\0';
+
+	// init queue
+	kInitializeQueue(&(pstWindow->stEventQueue), pstWindow->pstEventBuffer,
+			EVENTQUEUE_WINDOWMAXCOUNT, sizeof(EVENT));
 
 	pstTask = kGetRunningTask(kGetAPICID());
 	pstWindow->qwTaskID = pstTask->stLink.qwID;
