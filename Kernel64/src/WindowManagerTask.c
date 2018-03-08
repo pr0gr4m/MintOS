@@ -108,7 +108,7 @@ BOOL kProcessMouseData(void)
 {
 	QWORD qwWindowIDUnderMouse;
 	BYTE bButtonStatus;
-	int iRelatvieX, iRelativeY;
+	int iRelativeX, iRelativeY;
 	int iMouseX, iMouseY;
 	int iPreviousMouseX, iPreviousMouseY;
 	BYTE bChangedButton;
@@ -119,7 +119,7 @@ BOOL kProcessMouseData(void)
 	static int iWindowCount = 0;
 	QWORD qwWindowID;
 
-	if (kGetMouseDataFromMouseQueue(&bButtonStatus, &iRelatvieX, &iRelativeY) ==
+	if (kGetMouseDataFromMouseQueue(&bButtonStatus, &iRelativeX, &iRelativeY) ==
 			FALSE)
 		return FALSE;
 
@@ -137,14 +137,14 @@ BOOL kProcessMouseData(void)
 
 	qwWindowIDUnderMouse = kFindWindowByPoint(iMouseX, iMouseY);
 
-	bChangedButton = pstWindowManager->bPreviousButton ^ bButtonStatus;
+	bChangedButton = pstWindowManager->bPreviousButtonStatus ^ bButtonStatus;
 
 	if (bChangedButton & MOUSE_LBUTTONDOWN)
 	{
 		if (bButtonStatus & MOUSE_LBUTTONDOWN)
 		{
 			if (qwWindowIDUnderMouse != pstWindowManager->qwBackgroundWindowID)
-				kMoveWindowToTop(qwWIndowIDUnderMouse);
+				kMoveWindowToTop(qwWindowIDUnderMouse);
 
 			if (kIsInTitleBar(qwWindowIDUnderMouse, iMouseX, iMouseY) == TRUE)
 			{
@@ -197,7 +197,7 @@ BOOL kProcessMouseData(void)
 			// Test 2
 			kSPrintf(vcTempTitle, "MINT64 OS Test Window %d", iWindowCount++);
 			qwWindowID = kCreateWindow(iMouseX - 10, iMouseY - WINDOW_TITLEBAR_HEIGHT / 2,
-					400, 200, WINDOW_FLAGS_DRAWFRAME | WINDOW_FLAGS_DRAWTITLE, vcTemptitle);
+					400, 200, WINDOW_FLAGS_DRAWFRAME | WINDOW_FLAGS_DRAWTITLE, vcTempTitle);
 
 			kDrawText(qwWindowID, 10, WINDOW_TITLEBAR_HEIGHT + 10, RGB(0, 0, 0),
 					WINDOW_COLOR_BACKGROUND, "This is real window.", 22);

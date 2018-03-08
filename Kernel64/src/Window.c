@@ -591,7 +591,7 @@ BOOL kIsInTitleBar(QWORD qwWindowID, int iX, int iY)
 			((pstWindow->dwFlags & WINDOW_FLAGS_DRAWTITLE) == 0))
 		return FALSE;
 
-	if ((pstWindow->stArea.iX1 <= iX) && (iX <= pstWIndow->stArea.iX2) &&
+	if ((pstWindow->stArea.iX1 <= iX) && (iX <= pstWindow->stArea.iX2) &&
 			(pstWindow->stArea.iY1 <= iY) &&
 			(iY <= pstWindow->stArea.iY1 + WINDOW_TITLEBAR_HEIGHT))
 		return TRUE;
@@ -610,7 +610,7 @@ BOOL kIsInCloseButton(QWORD qwWindowID, int iX, int iY)
 		return FALSE;
 
 	if (((pstWindow->stArea.iX2 - WINDOW_XBUTTON_SIZE - 1) <= iX) && 
-			(iX <= pstWIndow->stArea.iX2 - 1) &&
+			(iX <= pstWindow->stArea.iX2 - 1) &&
 			(pstWindow->stArea.iY1 + 1 <= iY) &&
 			(iY <= pstWindow->stArea.iY1 + 1 + WINDOW_XBUTTON_SIZE))
 		return TRUE;
@@ -634,7 +634,7 @@ BOOL kMoveWindow(QWORD qwWindowID, int iX, int iY)
 
 	iWidth = kGetRectangleWidth(&stPreviousArea);
 	iHeight = kGetRectangleHeight(&stPreviousArea);
-	kSetRectangleDatat(iX, iY, iX + iWidth - 1, iY + iHeight - 1,
+	kSetRectangleData(iX, iY, iX + iWidth - 1, iY + iHeight - 1,
 			&(pstWindow->stArea));
 	
 	kUnlock(&(pstWindow->stLock));
@@ -658,7 +658,7 @@ static BOOL kUpdateWindowTitle(QWORD qwWindowID, BOOL bSelectedTitle)
 	if ((pstWindow != NULL) &&
 			(pstWindow->dwFlags & WINDOW_FLAGS_DRAWTITLE))
 	{
-		kDrawWindowTitle(pstWIndow->stLink.qwID, pstWindow->vcWindowTitle,
+		kDrawWindowTitle(pstWindow->stLink.qwID, pstWindow->vcWindowTitle,
 				bSelectedTitle);
 		stTitleBarArea.iX1 = 0;
 		stTitleBarArea.iY1 = 0;
@@ -711,8 +711,8 @@ BOOL kConvertPointClientToScreen(QWORD qwWindowID, const POINT* pstXY,
 	if (kGetWindowArea(qwWindowID, &stArea) == FALSE)
 		return FALSE;
 
-	pstXYInWindow->iX = pstXY->iX + stArea.iX1;
-	pstXYInWindow->iY = pstXY->iY + stArea.iY1;
+	pstXYInScreen->iX = pstXY->iX + stArea.iX1;
+	pstXYInScreen->iY = pstXY->iY + stArea.iY1;
 	return TRUE;
 }
 
@@ -723,7 +723,7 @@ BOOL kConvertRectScreenToClient(QWORD qwWindowID, const RECT* pstArea,
 {
 	RECT stWindowArea;
 
-	if (kGetWindowArea(qwWindowID, &stArea) == FALSE)
+	if (kGetWindowArea(qwWindowID, &stWindowArea) == FALSE)
 		return FALSE;
 
 	pstAreaInWindow->iX1 = pstArea->iX1 - stWindowArea.iX1;
@@ -740,13 +740,13 @@ BOOL kConvertRectClientToScreen(QWORD qwWindowID, const RECT* pstArea,
 {
 	RECT stWindowArea;
 
-	if (kGetWindowArea(qwWindowID, &stArea) == FALSE)
+	if (kGetWindowArea(qwWindowID, &stWindowArea) == FALSE)
 		return FALSE;
 
-	pstAreaInWindow->iX1 = pstArea->iX1 + stWindowArea.iX1;
-	pstAreaInWindow->iY1 = pstArea->iY1 + stWindowArea.iY1;
-	pstAreaInWindow->iX2 = pstArea->iX2 + stWindowArea.iX2;
-	pstAreaInWindow->iY2 = pstArea->iY2 + stWindowArea.iY2;
+	pstAreaInScreen->iX1 = pstArea->iX1 + stWindowArea.iX1;
+	pstAreaInScreen->iY1 = pstArea->iY1 + stWindowArea.iY1;
+	pstAreaInScreen->iX2 = pstArea->iX2 + stWindowArea.iX2;
+	pstAreaInScreen->iY2 = pstArea->iY2 + stWindowArea.iY2;
 	return TRUE;
 }
 
@@ -759,7 +759,7 @@ BOOL kUpdateScreenByID(QWORD qwWindowID)
 
 	pstWindow = kGetWindow(qwWindowID);
 	if ((pstWindow == NULL) &&
-			((pstWIndow->dwFlags & WINDOW_FLAGS_SHOW) == 0))
+			((pstWindow->dwFlags & WINDOW_FLAGS_SHOW) == 0))
 		return FALSE;
 
 	stEvent.qwType = EVENT_WINDOWMANAGER_UPDATESCREENBYID;
@@ -774,7 +774,7 @@ BOOL kUpdateScreenByWindowArea(QWORD qwWindowID, const RECT* pstArea)
 
 	pstWindow = kGetWindow(qwWindowID);
 	if ((pstWindow == NULL) &&
-			((pstWIndow->dwFlags & WINDOW_FLAGS_SHOW) == 0))
+			((pstWindow->dwFlags & WINDOW_FLAGS_SHOW) == 0))
 		return FALSE;
 
 	stEvent.qwType = EVENT_WINDOWMANAGER_UPDATESCREENBYWINDOWAREA;
@@ -789,7 +789,7 @@ BOOL kUpdateScreenByScreenArea(const RECT* pstArea)
 	EVENT stEvent;
 
 	stEvent.qwType = EVENT_WINDOWMANAGER_UPDATESCREENBYSCREENAREA;
-	stEvent.stWindowEvent.qwWindowID = WINDOW_INVALIDID
+	stEvent.stWindowEvent.qwWindowID = WINDOW_INVALIDID;
 	kMemCpy(&(stEvent.stWindowEvent.stArea), pstArea, sizeof(RECT));
 
 	return kSendEventToWindowManager(&stEvent);
