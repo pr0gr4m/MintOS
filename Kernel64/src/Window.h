@@ -5,6 +5,8 @@
 #include "Synchronization.h"
 #include "2DGraphics.h"
 #include "List.h"
+#include "Queue.h"
+#include "Keyboard.h"
 
 #define WINDOW_MAXCOUNT			2048
 
@@ -43,6 +45,72 @@
 #define MOUSE_CURSOR_OUTER		RGB(79, 204, 11)
 #define MOUSE_CURSOR_INNER		RGB(232, 255, 232)
 
+#define EVENTQUEUE_WINDOWMAXCOUNT			100
+#define EVENTQUEUE_WINDOWMANAGERMAXCOUNT	WINDOW_MAXCOUNT
+
+#define EVENT_UNKNOWN									0
+
+#define EVENT_MOUSE_MOVE								1
+#define EVENT_MOUSE_LBUTTONDOWN							2
+#define EVENT_MOUSE_LBUTTONUP							3
+#define EVENT_MOUSE_RBUTTONDOWN							4
+#define EVENT_MOUSE_RBUTTONUP							5
+#define EVENT_MOUSE_MBUTTONDOWN							6
+#define EVENT_MOUSE_MBUTTONUP							7
+
+#define EVENT_WINDOW_SELECT								8
+#define EVENT_WINDOW_DESELECT							9
+#define EVENT_WINDOW_MOVE								10
+#define EVENT_WINDOW_RESIZE								11
+#define EVENT_WINDOW_CLOSE								12
+
+#define EVENT_KEY_DOWN									13
+#define EVENT_KEY_UP									14
+
+#define EVENT_WINDOWMANAGER_UPDATESCREENBYID			15
+#define EVENT_WINDOWMANAGER_UPDATESCREENBYWINDOWAREA	16
+#define EVENT_WINDOWMANAGER_UPDATESCREENBYSCREENAREA	17
+
+//struct
+
+typedef struct kMouseEventStruct
+{
+	QWORD qwWindowID;
+
+	POINT stPoint;
+	BYTE bButtonStatus;
+} MOUSEEVENT;
+
+typedef struct kKeyEventStruct
+{
+	QWORD qwWindowID;
+
+	BYTE bASCIICode;
+	BYTE bScanCOde;
+
+	BYTE bFlags;
+} KEYEVENT;
+
+typedef struct kWindowEventStruct
+{
+	QWORD qwWindowID;
+
+	RECT stArea;
+} WINDOWEVENT;
+
+// Integration Event
+typedef struct kEventStruct
+{
+	QWORD qwType;	// event type
+
+	union
+	{
+		MOUSEEVENT stMouseEvent;
+		KEYEVENT stKeyEvent;
+		WINDOWEVENT stWindowEvent;
+		QWORD vqwData[3];	// use defined
+	};
+} EVENT;
 
 typedef struct kWindowStruct
 {
@@ -52,6 +120,10 @@ typedef struct kWindowStruct
 	COLOR* pstWindowBuffer;
 	QWORD qwTaskID;
 	DWORD dwFlags;
+
+	QUEUE stEventQueue;
+	EVENT* pstEventBuffer;
+
 	char vcWindowTitle[WINDOW_TITLEMAXLENGTH + 1];
 } WINDOW;
 
@@ -78,6 +150,14 @@ typedef struct kWindowManagerStruct
 	COLOR* pstVideoMemory;
 
 	QWORD qwBackgroundWindowID;
+
+	QUEUE stEventQueue;
+	EVENT* pstEventBuffer;
+
+	BYTE bPreviousButtonStatus;
+
+	QWORD qwMovingWindowID;
+	BOOL bWindowMoveMode;
 } WINDOWMANAGER;
 
 
@@ -103,10 +183,50 @@ BOOL kRedrawWindowByArea(const RECT* pstArea);
 static void kCopyWindowBufferToFrameBuffer(const WINDOW* pstWindow,
 		const RECT* pstCopyArea);
 
+QWORD kFindWindowByPoint(int iX, int iY);
+QWORD kFindWindowByTitle(const char* pcTitle);
+BOOL kIsWindowExist(QWORD qwWindowID);
+QWORD kGetTopWindowID(void);
+BOOL kMoveWindowToTop(QWORD qwWindowID);
+BOOL kIsInTitleBar(QWORD qwWindowID, int iX, int iY);
+BOOL kIsInCloseButton(QWORD qwWindowID, int iX, int iY);
+BOOL kMoveWindow(QWORD qwWindowID, int iX, int iY);
+static BOOL kUpdateWindowTitle(QWORD qwWindowID, BOOL bSelectedTitle);
+
+// convert point functions
+BOOL kGetWindowArea(QWORD qwWindowID, RECT* pstArea);
+// screen -> window
+BOOL kConvertPointScreenToClient(QWORD qwWindowID, const POINT* pstXY,
+		POINT* pstXYInWindow);
+// window -> screen
+BOOL kConvertPointClientToScreen(QWORD qwWindowID, const POINT* pstXY,
+		POINT* pstXYInScreen);
+// screen -> window
+BOOL kConvertRectScreenToClient(QWORD qwWindowID, const RECT* pstArea,
+		RECT* pstAreaInWindow);
+// window -> screen
+BOOL kConvertRectClientToScreen(QWORD qwWindowID, const RECT* pstArea,
+		RECT* pstAreaInScreen);
+
+// update screen functions
+BOOL kUpdateScreenByID(QWORD qwWindowID);
+BOOL kUpdateScreenByWindowArea(QWORD qwWindowID, const RECT* pstArea);
+BOOL kUpdateScreenByScreenArea(const RECT* pstArea);
+
+// event functions
+BOOL kSendEventToWindow(QWORD qwWindowID, const EVENT* pstEvent);
+BOOL kReceiveEventFromWindowQueue(QWORD qwWindowID, EVENT* pstEvent);
+BOOL kSendEventToWindowManager(const EVENT* pstEvent);
+BOOL kReceiveEventFromWindowManagerQueue(EVENT* pstEvent);
+BOOL kSetMouseEvent(QWORD qwWindowID, QWORD qwEventType, int iMouseX, int iMouseY,
+		BYTE bButtonStatus, EVENT* pstEvent);
+BOOL kSetWindowEvent(QWORD qwWindowID, QWORD qwEventType, EVENT* pstEvent);
+void kSetKeyEvent(QWORD qwWindow, const KEYDATA* pstKeyData, EVENT* pstEvent);
+
 // drawing functions
 BOOL kDrawWindowFrame(QWORD qwWindowID);
 BOOL kDrawWindowBackground(QWORD qwWindowID);
-BOOL kDrawWindowTitle(QWORD qwWindowID, const char* pcTitle);
+BOOL kDrawWindowTitle(QWORD qwWindowID, const char* pcTitle, BOOL bSelectedTitle);
 BOOL kDrawButton(QWORD qwWindowID, RECT* pstButtonArea, COLOR stBackgroundColor,
 		const char* pcText, COLOR stTextColor);
 BOOL kDrawPixel(QWORD qwWindowID, int iX, int iY, COLOR stColor);

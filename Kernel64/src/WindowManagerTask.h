@@ -4,4 +4,8 @@
 void kStartWindowManager(void);
 void kStartGraphicModeTest(void);
 
+BOOL kProcessMouseData(void);
+BOOL kProcessKeyData(void);
+BOOL kProcessEventQueueData(void);
+
 #endif
