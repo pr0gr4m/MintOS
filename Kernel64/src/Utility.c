@@ -1,5 +1,6 @@
 #include "Utility.h"
 #include "AssemblyUtility.h"
+#include "VBE.h"
 #include <stdarg.h>
 
 volatile QWORD g_qwTickCount = 0;
@@ -412,4 +413,11 @@ QWORD kRandom(void)
 {
 	gs_qwRandomValue = (gs_qwRandomValue * 412153 + 5571031) >> 16;
 	return gs_qwRandomValue;
+}
+
+BOOL kIsGraphicMode(void)
+{
+	if (*(BYTE*)VBE_STARTGRAPHICMODEFLAGADDRESS == 0)
+		return FALSE;
+	return TRUE;
 }

@@ -32,5 +32,6 @@ QWORD kGetTickCount(void);
 void kSleep(QWORD qwMillisecond);
 
 QWORD kRandom(void);
+BOOL kIsGraphicMode(void);
 
 #endif
