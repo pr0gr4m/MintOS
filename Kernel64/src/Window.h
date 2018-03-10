@@ -72,6 +72,8 @@
 #define EVENT_WINDOWMANAGER_UPDATESCREENBYWINDOWAREA	16
 #define EVENT_WINDOWMANAGER_UPDATESCREENBYSCREENAREA	17
 
+#define WINDOW_OVERLAPPEDAREALOGMAXCOUNT				20
+
 //struct
 
 typedef struct kMouseEventStruct
@@ -159,8 +161,15 @@ typedef struct kWindowManagerStruct
 
 	QWORD qwMovingWindowID;
 	BOOL bWindowMoveMode;
+
+	BYTE* pbDrawBitmap;
 } WINDOWMANAGER;
 
+typedef struct kDrawBitmapStruct
+{
+	RECT stArea;
+	BYTE* pbBitmap;
+} DRAWBITMAP;
 
 
 // window pool functions
@@ -180,9 +189,9 @@ BOOL kDeleteAllWindowInTaskID(QWORD qwTaskID);
 WINDOW* kGetWindow(QWORD qwWindowID);
 WINDOW* kGetWindowWithWindowLock(QWORD qwWindowID);
 BOOL kShowWindow(QWORD qwWindowID, BOOL bShow);
-BOOL kRedrawWindowByArea(const RECT* pstArea);
+BOOL kRedrawWindowByArea(const RECT* pstArea, QWORD qwDrawWindowID);
 static void kCopyWindowBufferToFrameBuffer(const WINDOW* pstWindow,
-		const RECT* pstCopyArea);
+		DRAWBITMAP* pstDrawBitmap);
 
 QWORD kFindWindowByPoint(int iX, int iY);
 QWORD kFindWindowByTitle(const char* pcTitle);
@@ -244,5 +253,12 @@ void kGetCursorPosition(int* piX, int* piY);
 
 void kGetRandomXY(int* piX, int* piY);
 COLOR kGetRandomColor(void);
+
+// update bitmap functions
+BOOL kCreateDrawBitmap(const RECT* pstArea, DRAWBITMAP* pstDrawBitmap);
+static BOOL kFillDrawBitmap(DRAWBITMAP* pstDrawBitmap, RECT* pstArea, BOOL bFill);
+BOOL kGetStartPositionInDrawBitmap(const DRAWBITMAP* pstDrawBitmap,
+		int iX, int iY, int* piByteOffset, int* piBitOffset);
+BOOL kIsDrawBitmapAllOff(const DRAWBITMAP* pstDrawBitmap);
 
 #endif

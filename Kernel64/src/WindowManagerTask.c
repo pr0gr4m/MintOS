@@ -278,19 +278,19 @@ BOOL kProcessEventQueueData(void)
 		case EVENT_WINDOWMANAGER_UPDATESCREENBYID:
 			// update whole window
 			if (kGetWindowArea(pstWindowEvent->qwWindowID, &stArea) == TRUE)
-				kRedrawWindowByArea(&stArea);
+				kRedrawWindowByArea(&stArea, WINDOW_INVALIDID);
 			break;
 
 		case EVENT_WINDOWMANAGER_UPDATESCREENBYWINDOWAREA:
 			// update window inner
 			if (kConvertRectClientToScreen(pstWindowEvent->qwWindowID,
 						&(pstWindowEvent->stArea), &stArea) == TRUE)
-				kRedrawWindowByArea(&stArea);
+				kRedrawWindowByArea(&stArea, WINDOW_INVALIDID);
 			break;
 
 		case EVENT_WINDOWMANAGER_UPDATESCREENBYSCREENAREA:
 			// update screen
-			kRedrawWindowByArea(&(pstWindowEvent->stArea));
+			kRedrawWindowByArea(&(pstWindowEvent->stArea), WINDOW_INVALIDID);
 			break;
 
 		default:
