@@ -175,7 +175,7 @@ BOOL kProcessMouseData(void)
 					kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
 
 					// Test
-					kDeleteWindow(qwWindowIDUnderMouse);
+					//kDeleteWindow(qwWindowIDUnderMouse);
 				}
 				else
 				{
