@@ -2,6 +2,11 @@
 #include "Window.h"
 #include "Utility.h"
 #include "Console.h"
+#include "Font.h"
+#include "MultiProcessor.h"
+#include "MPConfigurationTable.h"
+#include "DynamicMemory.h"
+#include "Task.h"
 
 void kBaseGUITask(void)
 {
@@ -267,3 +272,243 @@ void kHelloWorldGUITask(void)
 		kShowWindow(qwWindowID, TRUE);
 	}
 }
+
+void kSystemMonitorTask(void)
+{
+	QWORD qwWindowID;
+	int i;
+	int iWindowWidth;
+	int iProcessorCount;
+	DWORD vdwLastCPULoad[MAXPROCESSORCOUNT];
+	int viLastTaskCount[MAXPROCESSORCOUNT];
+	QWORD qwLastTickCount;
+	EVENT stReceivedEvent;
+	WINDOWEVENT* pstWindowEvent;
+	BOOL bChanged;
+	RECT stScreenArea;
+	QWORD qwLastDynamicMemoryUsedSize;
+	QWORD qwDynamicMemoryUsedSize;
+	QWORD qwTemp;
+
+	if (kIsGraphicMode() == FALSE)
+	{
+		kPrintf("This task can run only GUI Mode.\n");
+		return;
+	}
+
+	kGetScreenArea(&stScreenArea);
+
+	iProcessorCount = kGetProcessorCount();
+	iWindowWidth = iProcessorCount * (SYSTEMMONITOR_PROCESSOR_WIDTH +
+			SYSTEMMONITOR_PROCESSOR_MARGIN) + SYSTEMMONITOR_PROCESSOR_MARGIN;
+
+	// create system monitor window
+	qwWindowID = kCreateWindow((stScreenArea.iX2 - iWindowWidth) / 2,
+			(stScreenArea.iY2 - SYSTEMMONITOR_WINDOW_HEIGHT) / 2,
+			iWindowWidth, SYSTEMMONITOR_WINDOW_HEIGHT, WINDOW_FLAGS_DEFAULT &
+			~WINDOW_FLAGS_SHOW, "System Monitor");
+	if (qwWindowID == WINDOW_INVALIDID)
+		return;
+
+	// draw processor area
+	kDrawLine(qwWindowID, 5, WINDOW_TITLEBAR_HEIGHT + 15, iWindowWidth - 5,
+			WINDOW_TITLEBAR_HEIGHT + 15, RGB(0, 0, 0));
+	kDrawLine(qwWindowID, 5, WINDOW_TITLEBAR_HEIGHT + 16, iWindowWidth - 5,
+			WINDOW_TITLEBAR_HEIGHT + 16, RGB(0, 0, 0));
+	kDrawLine(qwWindowID, 5, WINDOW_TITLEBAR_HEIGHT + 17, iWindowWidth - 5,
+			WINDOW_TITLEBAR_HEIGHT + 17, RGB(0, 0, 0));
+	kDrawText(qwWindowID, 9, WINDOW_TITLEBAR_HEIGHT + 8, RGB(0, 0, 0),
+			WINDOW_COLOR_BACKGROUND, "Processor Information", 21);
+
+	// draw memory area
+	kDrawLine(qwWindowID, 5, WINDOW_TITLEBAR_HEIGHT + SYSTEMMONITOR_PROCESSOR_HEIGHT + 50,
+			iWindowWidth - 5, WINDOW_TITLEBAR_HEIGHT + SYSTEMMONITOR_PROCESSOR_HEIGHT + 50,
+			RGB(0, 0, 0));
+	kDrawLine(qwWindowID, 5, WINDOW_TITLEBAR_HEIGHT + SYSTEMMONITOR_PROCESSOR_HEIGHT + 51,
+			iWindowWidth - 5, WINDOW_TITLEBAR_HEIGHT + SYSTEMMONITOR_PROCESSOR_HEIGHT + 51,
+			RGB(0, 0, 0));
+	kDrawLine(qwWindowID, 5, WINDOW_TITLEBAR_HEIGHT + SYSTEMMONITOR_PROCESSOR_HEIGHT + 52,
+			iWindowWidth - 5, WINDOW_TITLEBAR_HEIGHT + SYSTEMMONITOR_PROCESSOR_HEIGHT + 52,
+			RGB(0, 0, 0));
+	kDrawText(qwWindowID, 9, WINDOW_TITLEBAR_HEIGHT + SYSTEMMONITOR_PROCESSOR_HEIGHT + 43,
+			RGB(0, 0, 0), WINDOW_COLOR_BACKGROUND, "Memory Information", 18);
+
+	kShowWindow(qwWindowID, TRUE);
+
+	qwLastTickCount = 0;
+
+	kMemSet(vdwLastCPULoad, 0, sizeof(vdwLastCPULoad));
+	kMemSet(viLastTaskCount, 0, sizeof(viLastTaskCount));
+	qwLastDynamicMemoryUsedSize = 0;
+
+	while (1)
+	{
+		if (kReceiveEventFromWindowQueue(qwWindowID, &stReceivedEvent) == TRUE)
+		{
+			switch (stReceivedEvent.qwType)
+			{
+				case EVENT_WINDOW_CLOSE:
+					kDeleteWindow(qwWindowID);
+					return;
+
+				default:
+					break;
+			}
+		}
+
+		if ((kGetTickCount() - qwLastTickCount) < 500)
+		{
+			kSleep(1);
+			continue;
+		}
+
+		qwLastTickCount = kGetTickCount();
+
+		// print processor information
+		for (i = 0; i < iProcessorCount; i++)
+		{
+			bChanged = FALSE;
+
+			if (vdwLastCPULoad[i] != kGetProcessorLoad(i))
+			{
+				vdwLastCPULoad[i] = kGetProcessorLoad(i);
+				bChanged = TRUE;
+			}
+
+			if (viLastTaskCount[i] != kGetTaskCount(i))
+			{
+				viLastTaskCount[i] = kGetTaskCount(i);
+				bChanged = TRUE;
+			}
+
+			if (bChanged == TRUE)
+			{
+				kDrawProcessorInformation(qwWindowID, i * SYSTEMMONITOR_PROCESSOR_WIDTH +
+						(i + 1) * SYSTEMMONITOR_PROCESSOR_MARGIN, WINDOW_TITLEBAR_HEIGHT + 28,
+						i);
+			}
+		}
+
+		kGetDynamicMemoryInformation(&qwTemp, &qwTemp, &qwTemp,
+				&qwDynamicMemoryUsedSize);
+
+		// print memory information
+		if (qwDynamicMemoryUsedSize != qwLastDynamicMemoryUsedSize)
+		{
+			qwLastDynamicMemoryUsedSize = qwDynamicMemoryUsedSize;
+
+			kDrawMemoryInformation(qwWindowID, WINDOW_TITLEBAR_HEIGHT +
+					SYSTEMMONITOR_PROCESSOR_HEIGHT + 60, iWindowWidth);
+		}
+	}
+}
+
+static void kDrawProcessorInformation(QWORD qwWindowID, int iX, int iY, BYTE bAPICID)
+{
+	char vcBuffer[100];
+	RECT stArea;
+	QWORD qwProcessorLoad;
+	QWORD iUsageBarHeight;
+	int iMiddleX;
+
+	kSPrintf(vcBuffer, "Processor ID: %d", bAPICID);
+	kDrawText(qwWindowID, iX + 10, iY, RGB(0, 0, 0), WINDOW_COLOR_BACKGROUND,
+			vcBuffer, kStrLen(vcBuffer));
+
+	kSPrintf(vcBuffer, "Task Count: %d   ", kGetTaskCount(bAPICID));
+	kDrawText(qwWindowID, iX + 10, iY + 18, RGB(0, 0, 0), WINDOW_COLOR_BACKGROUND,
+			vcBuffer, kStrLen(vcBuffer));
+
+	// Processor Load Graph
+	qwProcessorLoad = kGetProcessorLoad(bAPICID);
+	if (qwProcessorLoad > 100)
+		qwProcessorLoad = 100;
+
+	// total graph
+	kDrawRect(qwWindowID, iX, iY + 36, iX + SYSTEMMONITOR_PROCESSOR_WIDTH,
+			iY + SYSTEMMONITOR_PROCESSOR_HEIGHT, RGB(0, 0, 0), FALSE);
+
+	// usage = total * load / 100;
+	iUsageBarHeight = (SYSTEMMONITOR_PROCESSOR_HEIGHT - 40) * qwProcessorLoad / 100;
+
+	// usage graph
+	kDrawRect(qwWindowID, iX + 2, 
+			iY + (SYSTEMMONITOR_PROCESSOR_HEIGHT - iUsageBarHeight) - 2,
+			iX + SYSTEMMONITOR_PROCESSOR_WIDTH - 2,
+			iY + SYSTEMMONITOR_PROCESSOR_HEIGHT - 2, SYSTEMMONITOR_BAR_COLOR, TRUE);
+	// blank graph
+	kDrawRect(qwWindowID, iX + 2, iY + 38, iX + SYSTEMMONITOR_PROCESSOR_WIDTH - 2,
+			iY + (SYSTEMMONITOR_PROCESSOR_HEIGHT - iUsageBarHeight) - 1,
+			WINDOW_COLOR_BACKGROUND, TRUE);
+
+	kSPrintf(vcBuffer, "Usage: %d%%", qwProcessorLoad);
+	iMiddleX = (SYSTEMMONITOR_PROCESSOR_WIDTH -
+			(kStrLen(vcBuffer) * FONT_ENGLISHWIDTH)) / 2;
+	kDrawText(qwWindowID, iX + iMiddleX, iY + 80, RGB(0, 0, 0),
+			WINDOW_COLOR_BACKGROUND, vcBuffer, kStrLen(vcBuffer));
+
+	kSetRectangleData(iX, iY, iX + SYSTEMMONITOR_PROCESSOR_WIDTH,
+			iY + SYSTEMMONITOR_PROCESSOR_HEIGHT, &stArea);
+	kUpdateScreenByWindowArea(qwWindowID, &stArea);
+}
+
+static void kDrawMemoryInformation(QWORD qwWindowID, int iY, int iWindowWidth)
+{
+	char vcBuffer[100];
+	QWORD qwTotalRAMKByteSize;
+	QWORD qwDynamicMemoryStartAddress;
+	QWORD qwDynamicMemoryUsedSize;
+	QWORD qwUsedPercent;
+	QWORD qwTemp;
+	int iUsageBarWidth;
+	RECT stArea;
+	int iMiddleX;
+
+	qwTotalRAMKByteSize = kGetTotalRAMSize() * 1024;
+
+	kSPrintf(vcBuffer, "Total Size: %d KB        ", qwTotalRAMKByteSize);
+	kDrawText(qwWindowID, SYSTEMMONITOR_PROCESSOR_MARGIN + 10, iY + 3, RGB(0, 0, 0),
+			WINDOW_COLOR_BACKGROUND, vcBuffer, kStrLen(vcBuffer));
+
+	kGetDynamicMemoryInformation(&qwDynamicMemoryStartAddress, &qwTemp,
+			&qwTemp, &qwDynamicMemoryUsedSize);
+
+	kSPrintf(vcBuffer, "Used Size: %d KB        ", (qwDynamicMemoryUsedSize +
+				qwDynamicMemoryStartAddress) / 1024);
+	kDrawText(qwWindowID, SYSTEMMONITOR_PROCESSOR_MARGIN + 10, iY + 21, RGB(0, 0, 0),
+			WINDOW_COLOR_BACKGROUND, vcBuffer, kStrLen(vcBuffer));
+
+	// draw graph
+
+	kDrawRect(qwWindowID, SYSTEMMONITOR_PROCESSOR_MARGIN, iY + 40,
+			iWindowWidth - SYSTEMMONITOR_PROCESSOR_MARGIN,
+			iY + SYSTEMMONITOR_MEMORY_HEIGHT - 32, RGB(0, 0, 0), FALSE);
+
+	// usage = (Dynamic Start + Dynamic Used) * 100 / total
+	qwUsedPercent = (qwDynamicMemoryStartAddress + qwDynamicMemoryUsedSize) *
+		100 / 1024 / qwTotalRAMKByteSize;
+	if (qwUsedPercent > 100)
+		qwUsedPercent = 100;
+
+	iUsageBarWidth = (iWindowWidth - 2 * SYSTEMMONITOR_PROCESSOR_MARGIN) *
+		qwUsedPercent / 100;
+
+	// usage graph
+	kDrawRect(qwWindowID, SYSTEMMONITOR_PROCESSOR_MARGIN + 2, iY + 42,
+			SYSTEMMONITOR_PROCESSOR_MARGIN + 2 + iUsageBarWidth,
+			iY + SYSTEMMONITOR_MEMORY_HEIGHT - 34, SYSTEMMONITOR_BAR_COLOR, TRUE);
+	// blank graphc
+	kDrawRect(qwWindowID, SYSTEMMONITOR_PROCESSOR_MARGIN + 2 + iUsageBarWidth, 
+			iY + 42, iWindowWidth - SYSTEMMONITOR_PROCESSOR_MARGIN - 2,
+			iY + SYSTEMMONITOR_MEMORY_HEIGHT - 34, WINDOW_COLOR_BACKGROUND, TRUE);
+
+	kSPrintf(vcBuffer, "Usage: %d%%", qwUsedPercent);
+	iMiddleX = (iWindowWidth - (kStrLen(vcBuffer) * FONT_ENGLISHWIDTH)) / 2;
+	kDrawText(qwWindowID, iMiddleX, iY + 45, RGB(0, 0, 0), WINDOW_COLOR_BACKGROUND,
+			vcBuffer, kStrLen(vcBuffer));
+
+	kSetRectangleData(0, iY, iWindowWidth, iY + SYSTEMMONITOR_MEMORY_HEIGHT, &stArea);
+	kUpdateScreenByWindowArea(qwWindowID, &stArea);
+}
+
+
