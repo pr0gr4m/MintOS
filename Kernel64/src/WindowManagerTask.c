@@ -7,6 +7,7 @@
 #include "MultiProcessor.h"
 #include "Utility.h"
 #include "GUITask.h"
+#include "ApplicationPanelTask.h"
 
 void kStartWindowManager(void)
 {
@@ -19,6 +20,9 @@ void kStartWindowManager(void)
 
 	kGetCursorPosition(&iMouseX, &iMouseY);
 	kMoveCursor(iMouseX, iMouseY);
+
+	kCreateTask(TASK_FLAGS_SYSTEM | TASK_FLAGS_THREAD | TASK_FLAGS_LOW, 0, 0,
+			(QWORD)kApplicationPanelGUITask, TASK_LOADBALANCINGID);
 
 	while (1)
 	{
@@ -209,8 +213,8 @@ BOOL kProcessMouseData(void)
 					iMouseX, iMouseY, bButtonStatus, &stEvent);
 			kSendEventToWindow(qwWindowIDUnderMouse, &stEvent);
 
-			kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, NULL, NULL,
-					(QWORD)kHelloWorldGUITask, TASK_LOADBALANCINGID);
+			//kCreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, NULL, NULL,
+			//		(QWORD)kHelloWorldGUITask, TASK_LOADBALANCINGID);
 		}
 		else
 		{
