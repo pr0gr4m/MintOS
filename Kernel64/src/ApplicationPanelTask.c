@@ -291,7 +291,7 @@ static BOOL kProcessApplicationListWindowEvent(void)
 
 	while (1)
 	{
-		if (kReceiveEventFromWindowQueue(qwApplicationPanelID, &stReceivedEvent)
+		if (kReceiveEventFromWindowQueue(qwApplicationListID, &stReceivedEvent)
 				== FALSE)
 			break;
 
