@@ -9,6 +9,7 @@ APPLICATIONENTRY gs_vstApplicationTable[] =
 {
 	{ "Base GUI Task", kBaseGUITask },
 	{ "Hello World GUI Task", kHelloWorldGUITask },
+	{ "System Monitor Task", kSystemMonitorTask },
 };
 
 APPLICATIONPANELDATA gs_stApplicationPanelData;
