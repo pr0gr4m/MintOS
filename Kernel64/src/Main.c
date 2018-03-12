@@ -110,6 +110,7 @@ void Main(void)
 	kSetCursor(60, iCursorY++);
 	kPrintf("PASS\n");
 
+	/*
 	kPrintf("HDD Initialize.............................................[    ]");
 	kSetCursor(60, iCursorY++);
 	if (kInitializeHDD() == TRUE)
@@ -120,6 +121,7 @@ void Main(void)
 	{
 		kPrintf("FAIL\n");
 	}
+	*/
 
 	kPrintf("File System Initialize.....................................[    ]");
 	if (kInitializeFileSystem() == TRUE)
