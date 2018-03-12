@@ -93,12 +93,12 @@ void Main(void)
 	if (kInitializeMouse() == TRUE)
 	{
 		kEnableMouseInterrupt();
-		kSetCursor(45, iCursorY++);
+		kSetCursor(60, iCursorY++);
 		kPrintf("PASS\n");
 	}
 	else
 	{
-		kSetCursor(45, iCursorY++);
+		kSetCursor(60, iCursorY++);
 		kPrintf("FAIL\n");
 		while (1);
 	}
@@ -141,12 +141,12 @@ void Main(void)
 	kPrintf("Change To Multicore Processor Mode.........................[    ]");
 	if (kChangeToMultiCoreMode() == TRUE)
 	{
-		kSetCursor(45, iCursorY++);
+		kSetCursor(60, iCursorY++);
 		kPrintf("PASS\n");
 	}
 	else
 	{
-		kSetCursor(45, iCursorY++);
+		kSetCursor(60, iCursorY++);
 		kPrintf("FAIL\n");
 	}
 
@@ -182,8 +182,8 @@ void MainForApplicationProcessor(void)
 
 	kEnableInterrupt();
 
-	kPrintf("Application Processor [APIC ID : %d] Is Activated \n",
-			kGetAPICID());
+	//kPrintf("Application Processor [APIC ID : %d] Is Activated \n",
+	//		kGetAPICID());
 
 	kIdleTask();
 }

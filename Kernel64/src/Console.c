@@ -58,7 +58,7 @@ void kSetCursor(int iX, int iY)
 		{
 			// erase cursor
 			if ((gs_stConsoleManager.pstScreenBuffer[i].bCharacter == '_') &&
-					(gs_stConsoleManager.pstScreenBuffer[i].bAttribute = 0x00))
+					(gs_stConsoleManager.pstScreenBuffer[i].bAttribute == 0x00))
 			{
 				gs_stConsoleManager.pstScreenBuffer[i].bCharacter = ' ';
 				gs_stConsoleManager.pstScreenBuffer[i].bAttribute =
