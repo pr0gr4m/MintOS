@@ -34,35 +34,21 @@ int kGetNextParameter(PARAMETERLIST* pstList, char* pcParameter);
 static void kHelp(const char* pcParameterBuffer);
 static void kCls(const char* pcParameterBuffer);
 static void kShowTotalRAMSize(const char* pcParameterBuffer);
-static void kStringToDecimalHexTest(const char* pcParameterBuffer);
 static void kShutdown(const char* pcParameterBuffer);
-static void kSetTimer(const char* pcParameterBuffer);
-static void kWaitUsingPIT(const char* pcParameterBuffer);
-static void kReadTimeStampCounter(const char* pcParameterBuffer);
 static void kMeasureProcessorSpeed(const char* pcParameterBuffer);
 static void kShowDateAndTime(const char* pcParameterBuffer);
 
 // Test Task functions
-static void kCreateTestTask(const char* pcParameterBuffer);
 static void kChangeTaskPriority(const char* pcParameterBuffer);
 static void kShowTaskList(const char* pcParameterBuffer);
 static void kKillTask(const char* pcParameterBuffer);
 static void kCPULoad(const char* pcParameterBuffer);
 
-// Test Thread functions
-static void kCreateThreadTask(void);
-static void kTestThread(const char* pcParameterBuffer);
-
 // Test Mutex functions
-static void kTestMutex(const char* pcParameterBuffer);
 static void kShowMatrix(const char* pcParameterBuffer);
-static void kTestPIE(const char* pcParameterBuffer);
 
 // Test Memory Allocation Functions
-static void kTestRandomAllocation(const char* pcParameterBuffer);
-static void kTestSequentialAllocation(const char* pcParameterBuffer);
 static void kShowDynamicMemoryInformation(const char* pcParameterBuffer);
-static void kRandomAllocationTask(void);
 
 // PATA Driver Functions
 static void kShowHDDInformation(const char* pcParameterBuffer);
@@ -78,21 +64,15 @@ static void kDeleteFileInRootDirectory(const char* pcParameterBuffer);
 static void kShowRootDirectory(const char* pcParameterBuffer);
 static void kWriteDataToFile(const char* pcParameterBuffer);
 static void kReadDataFromFile(const char* pcParameterBuffer);
-static void kTestFileIO(const char* pcParameterBuffer);
 static void kFlushCache(const char* pcParameterBuffer);
-static void kTestPerformance(const char* pcParameterBuffer);
 
 // Serial Port
 static void kDownloadFile(const char* pcParameterBuffer);
 
 // Multi Processor
 static void kShowMPConfigurationTable(const char* pcParameterBuffer);
-static void kStartApplicationProcessor(const char* pcParameterBuffer);
-static void kStartSymmetricIOMode(const char* pcParameterBuffer);
 static void kShowIRQINTINMappingTable(const char* pcParameterBuffer);
 static void kShowInterruptProcessingCount(const char* pcParameterBuffer);
-static void kStartInterruptLoadBalancing(const char* pcParameterBuffer);
-static void kStartTaskLoadBalancing(const char* pcParameterBuffer);
 static void kChangeTaskAffinity(const char* pcParameterBuffer);
 
 // Graphic Mode
