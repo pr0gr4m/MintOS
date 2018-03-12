@@ -651,7 +651,7 @@ static void kProcessConsoleBuffer(QWORD qwWindowID)
 
 		if (bChanged == TRUE)
 		{
-			kSetRectangleData(2, j + FONT_ENGLISHHEIGHT + WINDOW_TITLEBAR_HEIGHT,
+			kSetRectangleData(2, j * FONT_ENGLISHHEIGHT + WINDOW_TITLEBAR_HEIGHT,
 					5 + FONT_ENGLISHWIDTH * CONSOLE_WIDTH, (j + 1) * FONT_ENGLISHHEIGHT +
 					WINDOW_TITLEBAR_HEIGHT - 1, &stLineArea);
 			kUpdateScreenByWindowArea(qwWindowID, &stLineArea);
