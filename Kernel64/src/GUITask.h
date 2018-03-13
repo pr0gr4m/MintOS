@@ -2,6 +2,7 @@
 #define __GUITASK_H__
 
 #include "Types.h"
+#include "Window.h"
 
 #define EVENT_USER_TESTMESSAGE		0x80000001
 
@@ -25,5 +26,12 @@ static void kDrawMemoryInformation(QWORD qwWindowID, int iY, int iWindowWidth);
 // console task functions
 void kGUIConsoleShellTask(void);
 static void kProcessConsoleBuffer(QWORD qwWindowID);
+
+// image viewer functions
+void kImageViewerTask(void);
+static void kDrawFileName(QWORD qwWindowID, RECT* pstArea, char* pcFileName,
+		int iNameLength);
+static BOOL kCreateImageViewerWindowAndExecute(QWORD qwMainWindowID,
+		const char* pcFileName);
 
 #endif
