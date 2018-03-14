@@ -17,12 +17,15 @@
 #define WINDOW_FLAGS_SHOW		0x00000001
 #define WINDOW_FLAGS_DRAWFRAME	0x00000002
 #define WINDOW_FLAGS_DRAWTITLE	0x00000004
+#define WINDOW_FLAGS_RESIZABLE	0x00000008
 
 #define WINDOW_FLAGS_DEFAULT	( WINDOW_FLAGS_SHOW | WINDOW_FLAGS_DRAWFRAME | \
 								WINDOW_FLAGS_DRAWTITLE )
 
 #define WINDOW_TITLEBAR_HEIGHT	21
 #define WINDOW_XBUTTON_SIZE		19
+#define	WINDOW_WIDTH_MIN		( WINDOW_XBUTTON_SIZE * 2 + 30 )
+#define WINDOW_HEIGHT_MIN		( WINDOW_TITLEBAR_HEIGHT + 30 )
 
 #define WINDOW_COLOR_FRAME							RGB(109, 218, 22)
 #define WINDOW_COLOR_BACKGROUND						RGB(255, 255, 255)
@@ -162,6 +165,10 @@ typedef struct kWindowManagerStruct
 	QWORD qwMovingWindowID;
 	BOOL bWindowMoveMode;
 
+	BOOL bWindowResizeMode;
+	QWORD qwResizingWindowID;
+	RECT stResizingWindowArea;
+
 	BYTE* pbDrawBitmap;
 } WINDOWMANAGER;
 
@@ -202,6 +209,8 @@ BOOL kIsInTitleBar(QWORD qwWindowID, int iX, int iY);
 BOOL kIsInCloseButton(QWORD qwWindowID, int iX, int iY);
 BOOL kMoveWindow(QWORD qwWindowID, int iX, int iY);
 static BOOL kUpdateWindowTitle(QWORD qwWindowID, BOOL bSelectedTitle);
+BOOL kResizeWindow(QWORD qwWindowID, int iX, int iY, int iWidth, int iHeight);
+BOOL kIsInResizeButton(QWORD qwWindowID, int iX, int iY);
 
 // convert point functions
 BOOL kGetWindowArea(QWORD qwWindowID, RECT* pstArea);
