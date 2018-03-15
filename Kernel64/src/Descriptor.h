@@ -21,28 +21,39 @@
 #define GDT_FLAGS_UPPER_DB		0x40
 #define GDT_FLAGS_UPPER_G		0x80
 
+// kernel level code and data descriptor
 #define GDT_FLAGS_LOWER_KERNELCODE	( GDT_TYPE_CODE | GDT_FLAGS_LOWER_S | \
 		GDT_FLAGS_LOWER_DPL0 | GDT_FLAGS_LOWER_P )
 #define GDT_FLAGS_LOWER_KERNELDATA	( GDT_TYPE_DATA | GDT_FLAGS_LOWER_S | \
 		GDT_FLAGS_LOWER_DPL0 | GDT_FLAGS_LOWER_P )
-#define GDT_FLAGS_LOWER_TSS			( GDT_FLAGS_LOWER_DPL0 | GDT_FLAGS_LOWER_P )
+// user level code and data descriptor
 #define GDT_FLAGS_LOWER_USERCODE	( GDT_TYPE_CODE | GDT_FLAGS_LOWER_S | \
 		GDT_FLAGS_LOWER_DPL3 | GDT_FLAGS_LOWER_P )
 #define GDT_FLAGS_LOWER_USERDATA	( GDT_TYPE_DATA | GDT_FLAGS_LOWER_S | \
 		GDT_FLAGS_LOWER_DPL3 | GDT_FLAGS_LOWER_P )
+// TSS segment descriptor
+#define GDT_FLAGS_LOWER_TSS			( GDT_FLAGS_LOWER_DPL0 | GDT_FLAGS_LOWER_P )
 
 #define GDT_FLAGS_UPPER_CODE	( GDT_FLAGS_UPPER_G | GDT_FLAGS_UPPER_L )
 #define GDT_FLAGS_UPPER_DATA	( GDT_FLAGS_UPPER_G | GDT_FLAGS_UPPER_L )
 #define GDT_FLAGS_UPPER_TSS		( GDT_FLAGS_UPPER_G )
 
+
+// segment descriptor offset
 #define GDT_KERNELCODESEGMENT	0x08
 #define GDT_KERNELDATASEGMENT	0x10
-#define GDT_TSSSEGMENT			0x18
+#define GDT_USERDATASEGMENT		0x18
+#define GDT_USERCODESEGMENT		0x20
+#define GDT_TSSSEGMENT			0x28
+
+// RPL to set segment selector
+#define SELECTOR_RPL_0			0x00
+#define SELECTOR_RPL_3			0x03
 
 // Start address of GDTR, after Page Table (264KB from 1MB)
 #define GDTR_STARTADDRESS		0x142000
-// number of 8 byte entry, NULL / Kernel Code / Kernel Data
-#define GDT_MAXENTRY8COUNT		3
+// number of 8 byte entry, NULL / Kernel Code & Data / User Code & Data
+#define GDT_MAXENTRY8COUNT		5
 // number of 16 byte entry, TSS
 #define GDT_MAXENTRY16COUNT		(MAXPROCESSORCOUNT)
 // GDT Table size
