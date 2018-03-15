@@ -5,6 +5,7 @@
 #include "Console.h"
 #include "MultiProcessor.h"
 #include "MPConfigurationTable.h"
+#include "DynamicMemory.h"
 
 static SCHEDULER gs_vstScheduler[MAXPROCESSORCOUNT];
 static TCBPOOLMANAGER gs_stTCBPoolManager;
@@ -86,9 +87,13 @@ TCB* kCreateTask(QWORD qwFlags, void* pvMemoryAddress, QWORD qwMemorySize,
 
 	bCurrentAPICID = kGetAPICID();
 
-	pstTask = kAllocateTCB();
-	if (pstTask == NULL)
+	if ((pstTask = kAllocateTCB()) == NULL)
+		return NULL;
+
+	// allocate stack
+	if ((pvStackAddress = kAllocateMemory(TASK_STACKSIZE)) == NULL)
 	{
+		kFreeTCB(pstTask->stLink.qwID);
 		return NULL;
 	}
 
@@ -98,6 +103,7 @@ TCB* kCreateTask(QWORD qwFlags, void* pvMemoryAddress, QWORD qwMemorySize,
 	if (pstProcess == NULL)
 	{
 		kFreeTCB(pstTask->stLink.qwID);
+		kFreeMemory(pvStackAddress);
 		kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 		return NULL;
 	}
@@ -155,18 +161,33 @@ static void kSetupTask(TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress,
 	*(QWORD *)((QWORD)pvStackAddress + qwStackSize - 8) = (QWORD)kExitTask;
 
 	// set segment selector
-	pstTCB->stContext.vqRegister[TASK_CSOFFSET] = GDT_KERNELCODESEGMENT;
-	pstTCB->stContext.vqRegister[TASK_DSOFFSET] = GDT_KERNELDATASEGMENT;
-	pstTCB->stContext.vqRegister[TASK_ESOFFSET] = GDT_KERNELDATASEGMENT;
-	pstTCB->stContext.vqRegister[TASK_FSOFFSET] = GDT_KERNELDATASEGMENT;
-	pstTCB->stContext.vqRegister[TASK_GSOFFSET] = GDT_KERNELDATASEGMENT;
-	pstTCB->stContext.vqRegister[TASK_SSOFFSET] = GDT_KERNELDATASEGMENT;
+	if ((qwFlags & TASK_FLAGS_USERLEVEL) == 0)
+	{
+		// kernel segment descriptor
+		pstTCB->stContext.vqRegister[TASK_CSOFFSET] = GDT_KERNELCODESEGMENT | SELECTOR_RPL_0;
+		pstTCB->stContext.vqRegister[TASK_DSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+		pstTCB->stContext.vqRegister[TASK_ESOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+		pstTCB->stContext.vqRegister[TASK_FSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+		pstTCB->stContext.vqRegister[TASK_GSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+		pstTCB->stContext.vqRegister[TASK_SSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+	}
+	else
+	{
+		// user segment descriptor
+		pstTCB->stContext.vqRegister[TASK_CSOFFSET] = GDT_USERCODESEGMENT | SELECTOR_RPL_3;
+		pstTCB->stContext.vqRegister[TASK_DSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+		pstTCB->stContext.vqRegister[TASK_ESOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+		pstTCB->stContext.vqRegister[TASK_FSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+		pstTCB->stContext.vqRegister[TASK_GSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+		pstTCB->stContext.vqRegister[TASK_SSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+	}
 
 	// set RIP register
 	pstTCB->stContext.vqRegister[TASK_RIPOFFSET] = qwEntryPointAddress;
 
-	// activate interrupt by set IF bit
-	pstTCB->stContext.vqRegister[TASK_RFLAGSOFFSET] |= 0x0200;
+	// activate interrupt by set IF bit and allow user access IO port
+	// by set IOPL bit
+	pstTCB->stContext.vqRegister[TASK_RFLAGSOFFSET] |= 0x3200;
 
 	// save ID, stack, flags
 	pstTCB->pvStackAddress = pvStackAddress;
@@ -885,6 +906,7 @@ void kIdleTask(void)
 				}
 
 				qwTaskID = pstTask->stLink.qwID;
+				kFreeMemory(pstTask->pvStackAddress);
 				kFreeTCB(qwTaskID);
 				kPrintf("IDLE: Task ID[0x%q] is completely ended.\n", qwTaskID);
 			}
