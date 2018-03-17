@@ -78,4 +78,7 @@ static void kChangeTaskAffinity(const char* pcParameterBuffer);
 // Graphic Mode
 static void kShowVBEModeInfo(const char* pcParameterBuffer);
 
+// System call
+static void kTestSystemCall(const char* pcParameterBuffer);
+
 #endif

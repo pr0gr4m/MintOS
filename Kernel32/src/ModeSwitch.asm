@@ -56,11 +56,11 @@ kSwitchAndExecute64bitKernel:
 	mov eax, 0x100000		; PML4 table address (1MB)
 	mov cr3, eax
 
-	; set IA32_EFER.LME to 1
+	; set IA32_EFER.LME and IA32_EFER.SCE to 1
 	mov ecx, 0xC0000080		; store IA32_EFER MSR register address
 	rdmsr
 							; rdmsr return lower value to eax 
-	or eax, 0x0100			; set LME bit (bit 8) 1
+	or eax, 0x0101			; set LME, SCE bit 1
 
 	wrmsr
 

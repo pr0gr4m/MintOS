@@ -17,6 +17,7 @@
 #include "LocalAPIC.h"
 #include "InterruptHandler.h"
 #include "VBE.h"
+#include "SystemCall.h"
 
 SHELLCOMMANDENTRY gs_vstCommandTable[] =
 {
@@ -52,6 +53,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
 	{ "changeaffinity", "Change Task Affinity, ex) changeaffinity 1(ID) 0xFF(Affinity)",
 		kChangeTaskAffinity },
 	{ "vbemodeinfo", "Show VBE Mode Information", kShowVBEModeInfo },
+	{ "testsystemcall", "Test System Call Operation", kTestSystemCall },
 };
 
 // main loop of shell
@@ -1309,3 +1311,14 @@ static void kShowVBEModeInfo(const char* pcParameterBuffer)
 			pstModeInfo->bLinearBlueMaskSize, pstModeInfo->bLinearBlueFieldPosition);
 }
 
+static void kTestSystemCall(const char* pcParameterBuffer)
+{
+	BYTE* pbUserMemory;
+
+	if ((pbUserMemory = kAllocateMemory(0x1000)) == NULL)
+		return;
+
+	kMemCpy(pbUserMemory, kSystemCallTestTask, 0x1000);
+	kCreateTask(TASK_FLAGS_USERLEVEL | TASK_FLAGS_PROCESS,
+			pbUserMemory, 0x1000, (QWORD)pbUserMemory, TASK_LOADBALANCINGID);
+}
