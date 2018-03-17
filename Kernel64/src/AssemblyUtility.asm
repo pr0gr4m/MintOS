@@ -9,6 +9,7 @@ global kReadTSC
 global kSwitchContext, kHlt, kTestAndSet, kPause
 global kInitializeFPU, kSaveFPUContext, kLoadFPUContext, kSetTS, kClearTS
 global kEnableGlobalLocalAPIC
+global kReadMSR, kWriteMSR
 
 ; read from port
 ; @param port number
@@ -302,4 +303,44 @@ kEnableGlobalLocalAPIC:
 	pop rdx
 	pop rcx
 	pop rax
+	ret
+
+; Read from MSR register
+; @param QWORD qwMSRAddress, QWORD* pqwRDX, QWORD* pqwRAX
+kReadMSR:
+	push rdx
+	push rax
+	push rcx
+	push rbx
+
+	mov rbx, rdx
+	mov rcx, rdi
+
+	rdmsr
+
+	mov qword [ rsi ], rdx
+	mov qword [ rbx ], rax
+
+	pop rbx
+	pop rcx
+	pop rax
+	pop rdx
+	ret
+
+; Write to MSR register
+; @param QWORD qwMSRAddress, QWORD pqwRDX, QWORD pqwRAX
+kWriteMSR:
+	push rdx
+	push rax
+	push rcx
+
+	mov rcx, rdi
+	mov rax, rdx
+	mov rdx, rsi
+
+	wrmsr
+
+	pop rcx
+	pop rax
+	pop rdx
 	ret

@@ -29,5 +29,7 @@ void kOutPortWord(WORD wPort, WORD wData);
 
 void kEnableGlobalLocalAPIC(void);
 
+void kReadMSR(QWORD qwMSRAddress, QWORD* pqwRDX, QWORD* pqwRAX);
+void kWriteMSR(QWORD qwMSRAddress, QWORD pqwRDX, QWORD pqwRAX);
 
 #endif
