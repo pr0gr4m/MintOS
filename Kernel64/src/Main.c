@@ -153,7 +153,7 @@ void Main(void)
 		kPrintf("FAIL\n");
 	}
 
-	kPrintf("System Call MSR Initialize.................................[    ]");
+	kPrintf("System Call MSR Initialize.................................[PASS]");
 	iCursorY++;
 	kInitializeSystemCall();
 

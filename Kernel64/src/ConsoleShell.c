@@ -67,6 +67,7 @@ void kStartConsoleShell(void)
 
 	pstConsoleManager = kGetConsoleManager();
 
+	kPrintf("\n");
 	kPrintf(CONSOLESHELL_PROMPTMESSAGE);
 
 	while (pstConsoleManager->bExit == FALSE)
