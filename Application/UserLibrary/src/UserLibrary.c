@@ -96,11 +96,11 @@ long atoi(const char* pcBuffer, int iRadix)
 	switch (iRadix)
 	{
 		case 16:
-			return kHexStringToQword(pcBuffer);
+			return HexStringToQword(pcBuffer);
 
 		case 10:
 		default:
-			return kDecimalStringToLong(pcBuffer);
+			return DecimalStringToLong(pcBuffer);
 	}
 	return 0;	// never reached
 }
@@ -157,10 +157,10 @@ int itoa(long lValue, char* pcBuffer, int iRadix)
 	switch (iRadix)
 	{
 		case 16:
-			return kHexToString(lValue, pcBuffer);
+			return HexToString(lValue, pcBuffer);
 		case 10:
 		default:
-			return kDecimalToString(lValue, pcBuffer);
+			return DecimalToString(lValue, pcBuffer);
 	}
 	return 0;	// never reached
 }
@@ -192,7 +192,7 @@ int HexToString(QWORD qwValue, char* pcBuffer)
 		qwValue /= 16;
 	}
 	pcBuffer[i] = '\0';
-	kReverseString(pcBuffer);
+	ReverseString(pcBuffer);
 	return i;
 }
 
@@ -227,9 +227,9 @@ int DecimalToString(long lValue, char* pcBuffer)
 	}
 	pcBuffer[i] = '\0';
 	if (pcBuffer[0] == '-')
-		kReverseString(&(pcBuffer[1]));
+		ReverseString(&(pcBuffer[1]));
 	else
-		kReverseString(pcBuffer);
+		ReverseString(pcBuffer);
 	return i;
 }
 
@@ -239,7 +239,7 @@ void ReverseString(char* pcBuffer)
 	int i;
 	char cTemp;
 
-	iLength = kStrLen(pcBuffer);
+	iLength = strlen(pcBuffer);
 	for (i = 0; i < iLength / 2; i++)
 	{
 		cTemp = pcBuffer[i];
@@ -254,7 +254,7 @@ int sprintf(char* pcBuffer, const char* pcFormatString, ...)
 	int iReturn;
 
 	va_start(ap, pcFormatString);
-	iReturn = kVSPrintf(pcBuffer, pcFormatString, ap);
+	iReturn = vsprintf(pcBuffer, pcFormatString, ap);
 	va_end(ap);
 
 	return iReturn;
@@ -270,7 +270,7 @@ int vsprintf(char* pcBuffer, const char* pcFormatString, va_list ap)
 	int iValue;
 	double dValue;
 
-	iFormatLength = kStrLen(pcFormatString);
+	iFormatLength = strlen(pcFormatString);
 	for (i = 0; i < iFormatLength; i++)
 	{
 		if (pcFormatString[i] == '%')
@@ -280,8 +280,8 @@ int vsprintf(char* pcBuffer, const char* pcFormatString, va_list ap)
 			{
 				case 's':
 					pcCopyString = (char*)(va_arg(ap, char*));
-					iCopyLength = kStrLen(pcCopyString);
-					kMemCpy(pcBuffer + iBufferIndex, pcCopyString, iCopyLength);
+					iCopyLength = strlen(pcCopyString);
+					memcpy(pcBuffer + iBufferIndex, pcCopyString, iCopyLength);
 					iBufferIndex += iCopyLength;
 					break;
 
@@ -293,20 +293,20 @@ int vsprintf(char* pcBuffer, const char* pcFormatString, va_list ap)
 				case 'd':
 				case 'i':
 					iValue = (int)(va_arg(ap, int));
-					iBufferIndex += kIToA(iValue, pcBuffer + iBufferIndex, 10);
+					iBufferIndex += itoa(iValue, pcBuffer + iBufferIndex, 10);
 					break;
 
 				case 'x':
 				case 'X':
 					qwValue = (DWORD)(va_arg(ap, DWORD)) & 0xFFFFFFFF;
-					iBufferIndex += kIToA(qwValue, pcBuffer + iBufferIndex, 16);
+					iBufferIndex += itoa(qwValue, pcBuffer + iBufferIndex, 16);
 					break;
 
 				case 'q':
 				case 'Q':
 				case 'p':
 					qwValue = (QWORD)(va_arg(ap, QWORD));
-					iBufferIndex += kIToA(qwValue, pcBuffer + iBufferIndex, 16);
+					iBufferIndex += itoa(qwValue, pcBuffer + iBufferIndex, 16);
 					break;
 
 				case 'f':
@@ -324,7 +324,7 @@ int vsprintf(char* pcBuffer, const char* pcFormatString, va_list ap)
 						dValue /= 10;
 					}
 					pcBuffer[iBufferIndex + 3 + k] = '\0';
-					kReverseString(pcBuffer + iBufferIndex);
+					ReverseString(pcBuffer + iBufferIndex);
 					iBufferIndex += 3 + k;
 					break;
 
@@ -351,26 +351,24 @@ void printf(const char* pcFormatString, ...)
 	int iNextPrintOffset;
 
 	va_start(ap, pcFormatString);
-	kVSPrintf(vcBuffer, pcFormatString, ap);
+	vsprintf(vcBuffer, pcFormatString, ap);
 	va_end(ap);
 
-	iNextPrintOffset = kConsolePrintString(vcBuffer);
-	kSetCursor(iNextPrintOffset % CONSOLE_WIDTH, iNextPrintOffset / CONSOLE_WIDTH);
+	iNextPrintOffset = ConsolePrintString(vcBuffer);
+	SetCursor(iNextPrintOffset % CONSOLE_WIDTH, iNextPrintOffset / CONSOLE_WIDTH);
 }
 
 static volatile QWORD gs_qwRandomValue = 0;
 
 void srand(QWORD qwSeed)
 {
-	gs_qwRandomValue = (gs_qwRandomValue * 412153 + 5571031) >> 16;
-	return gs_qwRandomValue;
+	gs_qwRandomValue = qwSeed;
 }
 
 QWORD rand(void)
 {
-	if (*(BYTE*)VBE_STARTGRAPHICMODEFLAGADDRESS == 0)
-		return FALSE;
-	return TRUE;
+	gs_qwRandomValue = (gs_qwRandomValue * 412153 + 5571031) >> 16;
+	return gs_qwRandomValue;
 }
 
 
@@ -454,7 +452,7 @@ BOOL ConvertPointScreenToClient(QWORD qwWindowID, const POINT* pstXY,
 {
 	RECT stArea;
 
-	if (kGetWindowArea(qwWindowID, &stArea) == FALSE)
+	if (GetWindowArea(qwWindowID, &stArea) == FALSE)
 		return FALSE;
 
 	pstXYInWindow->iX = pstXY->iX - stArea.iX1;
@@ -468,7 +466,7 @@ BOOL ConvertPointClientToScreen(QWORD qwWindowID, const POINT* pstXY,
 {
 	RECT stArea;
 
-	if (kGetWindowArea(qwWindowID, &stArea) == FALSE)
+	if (GetWindowArea(qwWindowID, &stArea) == FALSE)
 		return FALSE;
 
 	pstXYInScreen->iX = pstXY->iX + stArea.iX1;
@@ -481,7 +479,7 @@ BOOL ConvertRectScreenToClient(QWORD qwWindowID, const RECT* pstArea,
 {
 	RECT stWindowArea;
 
-	if (kGetWindowArea(qwWindowID, &stWindowArea) == FALSE)
+	if (GetWindowArea(qwWindowID, &stWindowArea) == FALSE)
 		return FALSE;
 
 	pstAreaInWindow->iX1 = pstArea->iX1 - stWindowArea.iX1;
@@ -496,7 +494,7 @@ BOOL ConvertRectClientToScreen(QWORD qwWindowID, const RECT* pstArea,
 {
 	RECT stWindowArea;
 
-	if (kGetWindowArea(qwWindowID, &stWindowArea) == FALSE)
+	if (GetWindowArea(qwWindowID, &stWindowArea) == FALSE)
 		return FALSE;
 
 	pstAreaInScreen->iX1 = pstArea->iX1 + stWindowArea.iX1;
@@ -526,14 +524,14 @@ BOOL SetMouseEvent(QWORD qwWindowID, QWORD qwEventType, int iMouseX, int iMouseY
 			stMouseXY.iX = iMouseX;
 			stMouseXY.iY = iMouseY;
 
-			if (kConvertPointScreenToClient(qwWindowID, &stMouseXY, &stMouseXYInWindow)
+			if (ConvertPointScreenToClient(qwWindowID, &stMouseXY, &stMouseXYInWindow)
 					== FALSE)
 				return FALSE;
 
 			pstEvent->qwType = qwEventType;
 			pstEvent->stMouseEvent.qwWindowID = qwWindowID;
 			pstEvent->stMouseEvent.bButtonStatus = bButtonStatus;
-			kMemCpy(&(pstEvent->stMouseEvent.stPoint), &stMouseXYInWindow,
+			memcpy(&(pstEvent->stMouseEvent.stPoint), &stMouseXYInWindow,
 					sizeof(POINT));
 			break;
 
@@ -557,10 +555,10 @@ BOOL SetWindowEvent(QWORD qwWindowID, QWORD qwEventType, EVENT* pstEvent)
 
 			pstEvent->qwType = qwEventType;
 			pstEvent->stWindowEvent.qwWindowID = qwWindowID;
-			if (kGetWindowArea(qwWindowID, &stArea) == FALSE)
+			if (GetWindowArea(qwWindowID, &stArea) == FALSE)
 				return FALSE;
 
-			kMemCpy(&(pstEvent->stWindowEvent.stArea), &stArea, sizeof(RECT));
+			memcpy(&(pstEvent->stWindowEvent.stArea), &stArea, sizeof(RECT));
 			break;
 
 		default:

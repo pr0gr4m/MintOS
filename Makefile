@@ -1,6 +1,6 @@
 # Makefile to build all subdirs and make disk image
 
-all: bootloader kernel32 kernel64 Disk.img
+all: bootloader kernel32 kernel64 Disk.img application
 
 bootloader:
 	@echo
@@ -47,9 +47,22 @@ Disk.img: BootLoader/BootLoader.bin Kernel32/Kernel32.bin Kernel64/Kernel64.bin
 	@echo ==================== All Build Complete ====================
 	@echo
 
+application:
+	@echo
+	@echo ==================== Build Application ====================
+	@echo
+
+	make -C Application
+
+	@echo
+	@echo ==================== Build Complete ====================
+	@echo
+	
+
 clean:
 	make -C BootLoader clean
 	make -C Kernel32 clean
 	make -C Kernel64 clean
+	make -C Application clean
 	make -C Utility clean
 	rm -f Disk.img

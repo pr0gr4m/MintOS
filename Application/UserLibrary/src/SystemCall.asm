@@ -2,7 +2,20 @@
 
 SECTION .text
 
-global ExecuteSystemCall
+global _START, ExecuteSystemCall
+
+extern Main, exit
+
+; entry point for user application
+_START:
+	call Main
+
+	mov rdi, rax
+	call exit
+
+	jmp $
+
+	ret
 
 ; execute system call
 ; @param QWORD qwServiceNumber, PARAMETERTABLE* pstParameter

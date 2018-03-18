@@ -37,7 +37,7 @@ clean:
 
 # Recall, based on tmp directory
 CENTRYPOINTOBJECTFILE = Main.o
-CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*c)
+CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.asm)
 COBJECTFILES = $(subst Main.o, , $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES))))
 ASSEMBLYOBJECTFILES = $(notdir $(patsubst %.asm,%.o,$(ASSEMBLYSOURCEFILES)))
