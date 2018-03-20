@@ -80,5 +80,6 @@ static void kShowVBEModeInfo(const char* pcParameterBuffer);
 
 // System call
 static void kTestSystemCall(const char* pcParameterBuffer);
+static void kExecuteApplicationProgram(const char* pcParameterBuffer);
 
 #endif

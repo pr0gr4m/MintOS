@@ -18,6 +18,7 @@
 #include "InterruptHandler.h"
 #include "VBE.h"
 #include "SystemCall.h"
+#include "Loader.h"
 
 SHELLCOMMANDENTRY gs_vstCommandTable[] =
 {
@@ -54,6 +55,8 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
 		kChangeTaskAffinity },
 	{ "vbemodeinfo", "Show VBE Mode Information", kShowVBEModeInfo },
 	{ "testsystemcall", "Test System Call Operation", kTestSystemCall },
+	{ "exec", "Execute Application Program, ex) exec a.elf argument",
+		kExecuteApplicationProgram },
 };
 
 // main loop of shell
@@ -1322,4 +1325,29 @@ static void kTestSystemCall(const char* pcParameterBuffer)
 	kMemCpy(pbUserMemory, kSystemCallTestTask, 0x1000);
 	kCreateTask(TASK_FLAGS_USERLEVEL | TASK_FLAGS_PROCESS,
 			pbUserMemory, 0x1000, (QWORD)pbUserMemory, TASK_LOADBALANCINGID);
+}
+
+
+static void kExecuteApplicationProgram(const char* pcParameterBuffer)
+{
+	PARAMETERLIST stList;
+	char vcFileName[512];
+	char vcArgumentString[1024];
+	QWORD qwID;
+
+	kInitializeParameter(&stList, pcParameterBuffer);
+	if (kGetNextParameter(&stList, vcFileName) == 0)
+	{
+		kPrintf("ex) exec a.elf argument\n");
+		return;
+	}
+
+	if (kGetNextParameter(&stList, vcArgumentString) == 0)
+		vcArgumentString[0] = '\0';
+
+	kPrintf("Execute Program... File [%s], Argument [%s]\n", vcFileName,
+			vcArgumentString);
+
+	qwID = kExecuteProgram(vcFileName, vcArgumentString, TASK_LOADBALANCINGID);
+	kPrintf("Task ID = 0x%Q\n", qwID);
 }
