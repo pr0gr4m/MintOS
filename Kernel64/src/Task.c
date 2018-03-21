@@ -303,7 +303,12 @@ static BOOL kAddTaskToReadyList(BYTE bAPICID, TCB* pstTask)
 	BYTE bPriority;
 
 	bPriority = GETPRIORITY(pstTask->qwFlags);
-	if (bPriority >= TASK_MAXREADYLISTCOUNT)
+	if (bPriority == TASK_FLAGS_WAIT)
+	{
+		kAddListToTail(&(gs_vstScheduler[bAPICID].stWaitList), pstTask);
+		return TRUE;
+	}
+	else if (bPriority >= TASK_MAXREADYLISTCOUNT)
 		return FALSE;
 
 	kAddListToTail(&(gs_vstScheduler[bAPICID].vstReadyList[bPriority]), pstTask);
@@ -325,6 +330,9 @@ static TCB* kRemoveTaskFromReadyList(BYTE bAPICID, QWORD qwTaskID)
 		return NULL;
 
 	bPriority = GETPRIORITY(pstTarget->qwFlags);
+	if (bPriority >= TASK_MAXREADYLISTCOUNT)
+		return NULL;
+
 	pstTarget = kRemoveList(&(gs_vstScheduler[bAPICID].vstReadyList[bPriority]), qwTaskID);
 	return pstTarget;
 }
