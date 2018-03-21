@@ -1,4 +1,4 @@
-all: mintlib helloworld
+all: mintlib helloworld textviewer
 
 mintlib:
 	@echo
@@ -22,6 +22,18 @@ helloworld:
 	@echo ==================== Build Complete ====================
 	@echo
 
+textviewer:
+	@echo
+	@echo ==================== Build TextViewer ====================
+	@echo
+
+	make -C TextViewer
+
+	@echo
+	@echo ==================== Build Complete ====================
+	@echo
+
 clean:
 	make -C UserLibrary clean
 	make -C HelloWorld clean
+	make -C TextViewer clean
