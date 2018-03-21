@@ -128,9 +128,6 @@ TCB* kCreateTask(QWORD qwFlags, void* pvMemoryAddress, QWORD qwMemorySize,
 
 	kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
-	pvStackAddress = (void*)(TASK_STACKPOOLADDRESS + (TASK_STACKSIZE *
-				GETTCBOFFSET(pstTask->stLink.qwID)));
-
 	kSetupTask(pstTask, qwFlags, qwEntryPointAddress, pvStackAddress,
 			TASK_STACKSIZE);
 
